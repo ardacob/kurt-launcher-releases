@@ -21,8 +21,9 @@ from urllib.parse import urlparse
 
 import requests
 import minecraft_launcher_lib as mc
+from data_paths import resolve_data_folder, remember_data_folder
 
-APP_VERSION = "0.4.3"
+APP_VERSION = "0.4.4"
 MANIFEST = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 MODRINTH = "https://api.modrinth.com/v2"
 LOADERS = ("vanilla", "fabric", "forge", "neoforge", "quilt")
@@ -239,7 +240,7 @@ class Api:
 class Store:
     def __init__(self, root: Path | None = None):
         base = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parents[1]
-        self.root = (root or Path(os.environ.get("KURT_DATA_DIR", str(base / "data")))).resolve()
+        self.root = (Path(root) if root is not None else resolve_data_folder(base)).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         self.minecraft = self.root / "minecraft"
         self.minecraft.mkdir(exist_ok=True)
@@ -249,6 +250,8 @@ class Store:
         self.servers = read_json(self.root / "servers.json", [])
         self.settings.setdefault("login_mode", "microsoft" if self.account else "offline")
         self.settings.setdefault("offline_username", "")
+        if root is None and not os.environ.get("KURT_DATA_DIR"):
+            remember_data_folder(self.root)
 
     def save(self):
         atomic_json(self.root / "profiles.json", self.profiles)

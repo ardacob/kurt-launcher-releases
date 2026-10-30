@@ -1,12 +1,13 @@
-# 0.4.3
+# 0.4.4
 
-Kurt Launcher artık ücretsiz GitHub Actions akışıyla test edilip derlenir, aynı yayıncı anahtarıyla imzalanır ve otomatik yayımlanır.
+Önceki sürümde oynadığınız oyunlar ve dünyalar yeni launcher sürümünde de otomatik görünsün.
 
-- Yeni sürüm numarası main dalına gönderildiğinde Windows EXE'si ve indirme ZIP'i otomatik hazırlanır.
-- Windows testleri ve paketlenmiş uygulamanın açılış kontrolü geçmeden yayın yapılmaz.
-- Güncelleme paketi ve çevrimiçi duyuru mevcut Ed25519 yayıncı anahtarıyla imzalanır. 0.4.1 kurulumları bu sürümü mevcut güncelleme kanalında bulur.
-- Aynı sürüm yeniden yayımlanmaz; geçmiş sürümler korunur. Yüklemeler taslakta tamamlanıp doğrulanmadan güncel kanal değiştirilmez.
-- Minecraft, modlar, profiller, hesaplar ve dünyalar güncelleme sırasında korunur.
-- Elle yapılan klasör derlemeleri de aynı imzalama aracıyla paketlenebilir. Bu uyumluluk için ek yayın testi bulunur.
+- Oyun veri klasörü bu Windows kullanıcısı için hatırlanır. Yeni ZIP başka bir klasöre açılsa bile aynı arşiv kullanılır.
+- Kurulu Minecraft ve Java, modlar, dünyalar, sunucular, kullanıcı adı ve son seçili profil korunur; yeniden indirme gerekmez.
+- İlk geçişte yakınındaki eski Kurt Launcher klasörleri bulunur. Birden fazla arşiv varsa seçim gösterilir.
+- Ayarlar'daki "Eski oyun klasörünü seç…" seçeneğiyle önceki launcher veya data klasörü seçilebilir.
+- Eski diske/oyun klasörüne ulaşılamazsa boş bir oyun listesiyle açılmak yerine mevcut klasörü seçmeniz istenir.
+- Mevcut dosyalar yerinde kullanılır. Eski data klasörünü koruyun; profilin Minecraft sürümü ve mod yükleyicisi aynı kalır.
+- Otomatik Windows derlemesi, testler, Ed25519 imzalama ve GitHub yayını devam eder.
 
-İndirmek için Windows ZIP'ini yazılabilir bir klasöre çıkarıp KurtLauncher.exe dosyasını açın. 0.4.1 kullanıyorsanız uygulamanın Güncellemeler bölümünü de kullanabilirsiniz.
+0.4.1–0.4.3 kullanıyorsanız launcher içindeki Güncellemeler bölümünden güncelleyebilirsiniz. ZIP'i başka klasöre açınca eski oyunlar bulunamazsa Ayarlar'dan eski oyun klasörünü seçip launcher'ı yeniden açın.

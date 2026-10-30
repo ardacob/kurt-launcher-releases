@@ -20,6 +20,7 @@ from core import APP_VERSION, LOADERS, Launcher, LauncherError, Cancelled, Store
 from servers import ServerManager
 from invites import PlayitManager, decode_invite
 from extras_ui import Enhancements
+from data_paths import DataLocationError, remember_data_folder, selected_data_folder
 
 CATEGORY_NAMES = {
     "adventure": "Macera", "cursed": "Sıra dışı", "decoration": "Dekorasyon",
@@ -597,9 +598,12 @@ class Window(Enhancements, QMainWindow):
         row = QHBoxLayout()
         row.addWidget(self.action(button("Ayarları kaydet",self.save_settings,"primary")))
         row.addStretch()
+        self.previous_games = self.action(button("Eski oyun klasörünü seç…", self.pick_previous_games))
+        row.addWidget(self.previous_games)
         row.addWidget(button("Veri klasörü ↗",lambda:self.open_path(self.store.root)))
         layout.addLayout(row)
         layout.addWidget(label("Veriler: " + str(self.store.root),"muted",True))
+        layout.addWidget(label("Launcher güncellendiğinde veya başka bir klasörden açıldığında aynı oyunlar, modlar ve dünyalar kullanılır.","muted",True))
         layout.addWidget(label("Kurt Launcher bağımsız bir projedir. Mojang veya Microsoft ile bağlantılı değildir.","muted",True))
         layout.addStretch()
 
@@ -1468,6 +1472,23 @@ class Window(Enhancements, QMainWindow):
         file,_=QFileDialog.getOpenFileName(self,"Java çalıştırıcısını seç", "", "Java (java.exe javaw.exe)")
         if file:
             self.java_path.setText(file)
+
+    def pick_previous_games(self):
+        if self.worker or (self.launcher.process and self.launcher.process.poll() is None) or self.server_manager.running:
+            self.report("Önce oyunu, sunucuyu ve devam eden işlemi kapatın.")
+            return
+        folder = QFileDialog.getExistingDirectory(self, "Eski Kurt Launcher oyun klasörünü seç", str(self.store.root.parent))
+        if not folder:
+            return
+        try:
+            selected = selected_data_folder(folder)
+            # Validate the old catalog before remembering it. No files are copied,
+            # merged, removed, or upgraded to another Minecraft version.
+            Store(selected)
+            remember_data_folder(selected)
+            self.report("Eski oyun klasörü kaydedildi. Launcher'ı kapatıp yeniden açtığında profillerin, modların ve dünyaların görünecek.")
+        except (DataLocationError, LauncherError, OSError) as exc:
+            self.report(str(exc))
 
     def login(self):
         if self.store.settings["login_mode"] == "offline":

@@ -33,6 +33,8 @@ Windows ZIP'leri bir gün saklanan geçici Actions artifact'larıdır; kalıcı 
 
 ## Kullanıcının gördüğü akış
 
+0.4.4, oyun arşivi konumunu Windows kullanıcısı için hatırlar. Eski 0.4.1–0.4.3 yardımcısının aktardığı veri konumu da başarılı yeniden başlatmada kaydedilir. Sonraki ZIP başka klasörden açılsa bile aynı kurulu oyunlar, profiller, modlar ve dünyalar görünür. Yeni kurulumlarda kullanıcıya ait ortak oyun klasörü kullanılır. Eski data taşınmaz/birleştirilmez; kullanılan klasör korunmalıdır. Birden fazla eski arşivde seçim istenir; ulaşılamayan eski disk yerine boş kurulum oluşturulmaz.
+
 1. Açılışta güncelleme kontrolü oyun/giriş düğmelerini kilitlemeden arka planda yapılır. Güncellemeler sayfasından kapatılabilir.
 2. İmzalı latest.json doğrulanır. Yeni sürüm varsa uygulamada bir bildirim görünür.
 3. Kullanıcı indirmeyi onaylar. Sürüme özel HTTPS adresinden paket indirilir ve SHA-512 doğrulanır.

@@ -9,7 +9,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"src"))
 from PySide6.QtCore import QThreadPool
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
-from core import LauncherError
+from core import APP_VERSION, LauncherError, Store
 from ui import Window, mod_version_text
 
 app=QApplication.instance() or QApplication([])
@@ -28,7 +28,8 @@ class UiTests(unittest.TestCase):
         self.assertEqual(self.window.tools_tabs.currentIndex(), 6)
 
     def test_background_update_check_does_not_lock_game_controls(self):
-        with patch.object(self.window.updater, "check_feed", return_value={"available": True, "message": "Yeni sürüm", "manifest": {"version":"0.4.2"}}):
+        next_version = ".".join(APP_VERSION.split(".")[:2] + [str(int(APP_VERSION.split(".")[2]) + 1)])
+        with patch.object(self.window.updater, "check_feed", return_value={"available": True, "message": "Yeni sürüm", "manifest": {"version":next_version}}):
             self.window.check_updates_background()
             self.assertTrue(self.window.profiles.isEnabled())
             self.assertTrue(self.window.login_button.isEnabled())
@@ -38,6 +39,33 @@ class UiTests(unittest.TestCase):
         self.assertIsNone(self.window.worker)
         self.assertIn("Güncelleme var", self.window.sidebar_updates.text())
         self.assertFalse(self.window.update_notification.isHidden())
+
+    def test_old_game_picker_keeps_both_worlds_and_registers_the_next_launch(self):
+        from data_paths import remembered_data_folder
+        old = Store(Path(self.temp.name) / "old/data")
+        profile = old.create("Önceki oyunum", "1.20.1", "fabric")
+        world = old.directory(profile) / "saves/Dunyam/level.dat"
+        world.parent.mkdir(parents=True)
+        world.write_bytes(b"old-world")
+        config = Path(self.temp.name) / "config/data-location.json"
+        current = self.window.store.root
+        with patch("data_paths.location_file", return_value=config), \
+                patch("ui.QFileDialog.getExistingDirectory", return_value=str(old.root.parent)):
+            self.window.previous_games.click()
+            self.assertEqual(remembered_data_folder(), old.root)
+        self.assertEqual(world.read_bytes(), b"old-world")
+        self.assertEqual(self.window.store.root, current)
+        self.assertIn("yeniden açtığında", self.window.status.text())
+
+    def test_old_game_picker_does_not_switch_archive_while_minecraft_is_running(self):
+        from unittest.mock import Mock
+        self.window.launcher.process = Mock()
+        self.window.launcher.process.poll.return_value = None
+        with patch("ui.QFileDialog.getExistingDirectory") as dialog:
+            self.window.previous_games.click()
+            dialog.assert_not_called()
+        self.assertIn("Önce oyunu", self.window.status.text())
+        self.window.launcher.process = None
 
     def test_library_tools_and_backup_actions_are_reachable(self):
         p = self.window.store.create("Test", "1.20.1", "fabric")

@@ -2,9 +2,36 @@ import sys
 from pathlib import Path
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import QLockFile
-from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtWidgets import QApplication, QMessageBox, QInputDialog, QFileDialog
 from core import Store
+from data_paths import (DataLocationError, DataChoiceRequired, DataFolderMissing,
+                        remember_data_folder, selected_data_folder)
 from ui import Window
+
+
+def open_store():
+    try:
+        return Store()
+    except DataLocationError as exc:
+        if "--smoke-test" in sys.argv:
+            raise
+        if isinstance(exc, DataChoiceRequired):
+            options = [str(folder) for folder in exc.candidates] + ["Başka bir klasör seç…"]
+            choice, accepted = QInputDialog.getItem(None, "Önceki oyunların", str(exc), options, 0, False)
+            if not accepted:
+                return None
+            folder = choice if choice != options[-1] else ""
+        else:
+            QMessageBox.information(None, "Önceki oyunların", str(exc))
+            folder = ""
+        if not folder:
+            folder = QFileDialog.getExistingDirectory(None, "Eski Kurt Launcher oyun klasörünü seç")
+        if not folder:
+            return None
+        root = selected_data_folder(folder)
+        result = Store(root)
+        remember_data_folder(result.root)
+        return result
 
 
 def main():
@@ -12,7 +39,9 @@ def main():
     app.setApplicationName("Kurt Launcher")
     app.setOrganizationName("KurtLauncher")
     try:
-        store = Store()
+        store = open_store()
+        if store is None:
+            return 0
         lock = QLockFile(str(store.root / "launcher.lock"))
         if not lock.tryLock(100):
             QMessageBox.information(None,"Kurt Launcher","Bu veri klasörünü kullanan bir launcher zaten açık.")
@@ -49,6 +78,9 @@ def main():
             if position + 1 < len(sys.argv):
                 health = Path(sys.argv[position + 1]).resolve()
                 if health.parent == (store.root / "updates").resolve() and health.suffix == ".ok":
+                    # Old update workers pass KURT_DATA_DIR. Remember it for ZIP
+                    # launches too, without registering isolated smoke-test data.
+                    remember_data_folder(store.root)
                     app.processEvents()
                     health.write_text("Launcher startup OK", encoding="utf-8")
         return app.exec()
@@ -58,7 +90,8 @@ def main():
                 import traceback
                 (store.root / "smoke-error.txt").write_text(traceback.format_exc(), encoding="utf-8")
             return 1
-        QMessageBox.critical(None,"Kurt Launcher",f"Launcher açılamadı ({type(exc).__name__}). Veri klasörünün yazılabilir olduğundan emin olun.")
+        message = str(exc) if isinstance(exc, DataLocationError) else f"Launcher açılamadı ({type(exc).__name__}). Veri klasörünün yazılabilir olduğundan emin olun."
+        QMessageBox.critical(None,"Kurt Launcher",message)
         return 1
 
 

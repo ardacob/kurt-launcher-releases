@@ -1,6 +1,14 @@
-# Kurt Launcher 0.4.3
+# Kurt Launcher 0.4.4
 
 [En yeni Windows sürümünü indir](https://github.com/ardacob/kurt-launcher-releases/releases/latest) · [Tüm sürümler](https://github.com/ardacob/kurt-launcher-releases/releases) · [Otomatik derleme](https://github.com/ardacob/kurt-launcher-releases/actions/workflows/release.yml)
+
+## 0.4.4: oyunların yeni launcher sürümünde de görünsün
+
+Launcher artık oyun veri klasörünü bu Windows kullanıcısı için hatırlar. Yeni sürüm başka bir klasöre çıkarılsa da aynı profiller, kurulu Minecraft sürümleri, modlar, dünyalar, sunucular ve son seçili profil kullanılır. Mevcut `data` klasörü yerinde tutulur; oyunları yeniden indirmek gerekmez.
+
+İlk açılışta eski launcher'ın yanındaki veriler kullanılır. Yeni ZIP başka bir klasöre çıkarılmışsa yakınındaki eski Kurt Launcher klasörleri aranır. Tek arşiv bulunursa otomatik seçilir; birden fazla arşiv varsa hangisini kullanacağınız sorulur. Ayarlar → **Eski oyun klasörünü seç…** ile eski launcher klasörü veya içindeki `data` seçilebilir; sonraki açılışta kullanılır. Eksik/eski diskteki veri klasörü yerine sessizce boş bir oyun listesi oluşturulmaz.
+
+Veri konumu `%LOCALAPPDATA%\KurtLauncher\data-location.json` dosyasında yerel olarak tutulur; internete gönderilmez. Tamamen yeni kurulumlar `%LOCALAPPDATA%\KurtLauncher\data` kullanır. Mevcut arşivlerin dosyaları taşınmaz veya birleştirilmez; kullanılan eski `data` klasörünü koruyun. Profilin Minecraft sürümü ve mod yükleyicisi aynı kalır.
 
 ## Ücretsiz otomatik yayın
 
@@ -46,7 +54,7 @@ Sunucu sahibi **Kütüphane → Paket paylaş → Sunucu mod listesi oluştur** 
 
 ## Başlatma
 
-`KurtLauncher.exe` dosyasını açın. Python kurulması gerekmez. Programı yazılabilir bir klasörde tutun; oyunlar ve ayarlar yanındaki `data` klasörüne kaydedilir.
+`KurtLauncher.exe` dosyasını açın. Python kurulması gerekmez. Oyunlar ve ayarlar hatırlanan oyun klasöründe saklanır; mevcut kurulumlarda eski `data` klasörü kullanılır. **Ayarlar → Veri klasörü** bu konumu açar.
 
 1. Oyun merkezinden sürüm kanalı, Minecraft sürümü ve mod yükleyicisi seçin.
 2. **Profil oluştur** ile profilinize bir ad verin.
@@ -68,7 +76,7 @@ Mod atölyesindeki sıralama menüsünde **En çok indirilen**, **En yeni**, **S
 
 Evet. **Sürümleri yenile** yalnızca resmî sürüm listesi önbelleğini günceller. Minecraft dosyaları, modlar, profiller, dünyalar ve sunucular silinmez. Launcher paketini güncellerken yeni dosyaları mevcut launcher klasörüne çıkarın ve **`data` klasörünü silmeyin veya değiştirmeyin**. Paketin içinde `data` yoktur.
 
-Paketi başka bir klasöre çıkarırsanız önceki veriler eski klasörde kalır; yeni kopya onları otomatik bulmaz. Aynı launcher klasörünü kullanın veya eski `data` klasörünü yeni konuma taşıyın/kopyalayın. Farklı bir Minecraft sürümü için oluşturulan yeni profilin mod klasörü ayrıdır; uyumlu modlar o profile ayrıca eklenir.
+0.4.4'ten itibaren paketi başka bir klasöre açmak da hatırlanan oyun arşivini kullanır. İlk geçişte eski klasör otomatik bulunamazsa **Ayarlar → Eski oyun klasörünü seç…** üzerinden seçip launcher'ı yeniden açın. Farklı bir Minecraft sürümü için oluşturulan yeni profilin mod klasörü ayrıdır; uyumlu modlar o profile ayrıca eklenir.
 
 ## Ücretsiz, port açmadan davetle oynama
 

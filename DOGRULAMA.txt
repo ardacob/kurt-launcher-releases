@@ -1,3 +1,20 @@
+Kurt Launcher 0.4.4 — oyun arşivinin sürümler arasında korunması, 31 Ekim 2026
+
+GEÇTİ: 130 uygulama testi + 9 yayın testi (139 toplam).
+12 yeni uygulama kontrolü:
+- 0.4.1 biçimindeki profilden başka launcher klasörüne geçişte son profil,
+  kullanıcı adı, kurulu Minecraft kimliği, mod kilidi, mod ve dünya baytları.
+- Yeni ZIP'in tek eski arşivi bulup konumunu hatırlaması.
+- 0.4.3'teki boş profil listesinin eski dünyayı gizlememesi.
+- Yeni kurulumlarda EXE klasöründen bağımsız ortak oyun konumu.
+- Birden fazla arşivde seçim, bozuk konum ve bağlantısız diskte veri koruma.
+- Test/ortam değişkeni klasörlerinin gerçek kullanıcı konumunu değiştirmemesi.
+- Eski launcher veya data klasörünün seçilebilmesi, ilgisiz klasörün reddi.
+- Ayarlardaki seçimden sonra her iki arşivin korunması ve oyun çalışırken
+  klasör seçiminin engellenmesi.
+
+Önceki yayın doğrulama kaydı:
+------------------------------------------------------------
 Kurt Launcher 0.4.3 — otomatik yayın doğrulaması, 31 Ekim 2026
 
 Yerel doğrulama: 118 uygulama testi ve 9 yayın testi geçti.
