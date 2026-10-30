@@ -1,4 +1,8 @@
-Kurt Launcher 0.4.8 — Shaderpack atölyesi, 31 Ekim 2026
+Kurt Launcher 0.4.9 — Shaderpack atölyesi, 31 Ekim 2026
+
+0.4.9: PyInstaller yeniden başlatmasında bağımsız çalışma ortamı zorlanır.
+Gerçek tek dosyalı EXE, aynı konumda silinmiş eski runtime ortamı ile
+yeniden başlatılır. Bu kontrol yayın öncesi Windows derleme akışına eklendi.
 
 180 uygulama testi + 9 yayın testi. Yerel Windows symlink senaryosu,
 hesapta symlink oluşturma yetkisi bulunmadığından atlanır.

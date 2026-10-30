@@ -1,6 +1,8 @@
-# 0.4.8
+# 0.4.9
 
 Shaderpack atölyesi eklendi.
+
+- Aynı uygulama klasörünün üzerine güncellemede bağımsız Python çalışma ortamı oluşturulur; eski geçici klasör temizlenirken yeniden açılışın etkilenmesi düzeltildi.
 
 - Sol menüde Shaderpack’ler: Modrinth üzerinde arama, en çok indirilen, en yeni ve son güncellenen sıralaması, sayfalama.
 - Gerçek oyun görselleri ve logolar; açıklama, paket sürümü, indirme sayısı, yapımcı ve yayın tarihi.

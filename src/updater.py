@@ -141,7 +141,8 @@ class Updater:
         shutil.copy2(self.assets / "update-worker.ps1", helper)
         powershell = Path(os.environ.get("SystemRoot", "C:/Windows")) / "System32/WindowsPowerShell/v1.0/powershell.exe"
         subprocess.Popen([str(powershell), "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(helper), "-Plan", str(path)],
-                         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0), close_fds=True)
+                         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0), close_fds=True,
+                         env={**os.environ, "PYINSTALLER_RESET_ENVIRONMENT": "1"})
 
     def check_feed(self, task):
         """Feed URL and publisher key are shipped by the publisher, never user content."""

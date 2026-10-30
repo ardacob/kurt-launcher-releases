@@ -1,5 +1,8 @@
 param([Parameter(Mandatory=$true)][string]$Plan)
 $ErrorActionPreference = 'Stop'
+# Restart as an independent PyInstaller instance: the previous onefile parent's
+# temporary runtime is deleted on exit, even when the executable path is unchanged.
+$env:PYINSTALLER_RESET_ENVIRONMENT = '1'
 $updatePlan = Get-Content -LiteralPath $Plan -Raw | ConvertFrom-Json
 $installPath = [IO.Path]::GetFullPath($updatePlan.installation)
 $stagePath = [IO.Path]::GetFullPath($updatePlan.stage)

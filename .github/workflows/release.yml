@@ -57,6 +57,8 @@ jobs:
           $process = Start-Process -FilePath (Join-Path $PWD 'dist/KurtLauncher.exe') -ArgumentList '--smoke-test' -WindowStyle Hidden -PassThru
           if (-not $process.WaitForExit(90000)) { $process.Kill(); throw 'Packaged app did not exit within 90 seconds' }
           if ($process.ExitCode -ne 0 -or -not (Test-Path (Join-Path $env:KURT_DATA_DIR 'smoke-test.ok'))) { throw 'Packaged app startup check failed' }
+      - name: Verify real frozen in-place restart
+        run: python ci/verify_restart.py
       - name: Assemble clean Windows ZIP
         run: python ci/build.py package
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

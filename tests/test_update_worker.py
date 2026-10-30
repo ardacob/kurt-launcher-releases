@@ -25,7 +25,7 @@ class WindowsUpdateWorkerTests(unittest.TestCase):
         cls.root = Path(cls.temp.name).resolve()
         cls.flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         cls.fixtures = {}
-        for name, body in (("old", "return 0;"), ("good", 'if(args.Length == 2 && args[0] == "--update-health") { File.WriteAllText(args[1] + ".cwd", Directory.GetCurrentDirectory()); File.WriteAllText(args[1], "OK"); } return 0;'), ("bad", "return 2;")):
+        for name, body in (("old", "return 0;"), ("good", 'if(args.Length == 2 && args[0] == "--update-health") { if(Environment.GetEnvironmentVariable("PYINSTALLER_RESET_ENVIRONMENT") != "1") return 3; File.WriteAllText(args[1] + ".cwd", Directory.GetCurrentDirectory()); File.WriteAllText(args[1], "OK"); } return 0;'), ("bad", "return 2;")):
             source = cls.root / (name + ".cs")
             target = cls.root / (name + ".exe")
             source.write_text("using System; using System.IO; class App { static int Main(string[] args) { " + body + " } }")
