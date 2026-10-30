@@ -23,7 +23,7 @@ import requests
 import minecraft_launcher_lib as mc
 from data_paths import resolve_data_folder, remember_data_folder
 
-APP_VERSION = "0.4.6"
+APP_VERSION = "0.4.7"
 MANIFEST = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 MODRINTH = "https://api.modrinth.com/v2"
 LOADERS = ("vanilla", "fabric", "forge", "neoforge", "quilt")

@@ -1,8 +1,9 @@
-# 0.4.6
+# 0.4.7
 
 Oyunların launcher klasöründen bağımsız kalsın; yeni launcher sürümleri otomatik kurulsun ve açılsın.
 
 - Otomatik kurulumdan sonra launcher penceresi görünür olarak açılır. Geri dönüş gerektiğinde önceki sürüm de görünür açılır.
+- Yeni uygulama kendi kurulum klasöründen başlar; Windows eski launcher klasörünü açık tutmaz.
 
 - Oyunlar, modlar, dünyalar ve sunucular kullanıcıya ait ortak KurtLauncher/data klasörüne kopyalanır; bütün dosyalar doğrulandıktan sonra bu konum kullanılır.
 - Aktarım tamamlandıktan sonra eski launcher klasörünü silmek oyunlarını silmez. Kurulu Minecraft/Java, modlar, son profil ve kullanıcı adı korunur.
