@@ -68,12 +68,12 @@ def main():
     files = {}
     sources = []
     paths = []
-    for child in source.iterdir():
+    for child in sorted(source.iterdir()):
         if child.name not in top_level: continue
         if child.is_symlink(): parser.error("Release cannot contain links.")
         if child.is_dir(): paths.extend(regular_files(child))
         elif child.is_file(): paths.append(child)
-    for path in paths:
+    for path in sorted(paths):
         name = path.relative_to(source).as_posix()
         if name.split("/")[0] not in top_level or "__pycache__" in path.parts or path.suffix == ".pyc":
             continue
@@ -83,8 +83,13 @@ def main():
     manifest = {"format": 1, "product": "KurtLauncher", "platform": "windows-x64", "version": version, "files": files}
     envelope = {"manifest": manifest, "signature": base64.b64encode(key.sign(canonical(manifest))).decode()}
     with zipfile.ZipFile(args.output, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
-        archive.writestr("update.json", json.dumps(envelope, ensure_ascii=False))
-        for path, name in sources: archive.write(path, "payload/" + name)
+        def write(name, content):
+            info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o100644 << 16
+            archive.writestr(info, content, compresslevel=6)
+        write("update.json", canonical(envelope))
+        for path, name in sources: write("payload/" + name, path.read_bytes())
     print("Signed update created:", args.output)
     if args.feed_output:
         online = {"format": 1, "product": "KurtLauncher", "platform": "windows-x64", "version": version,

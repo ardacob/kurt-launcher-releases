@@ -13,6 +13,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "ci"))
+sys.path.insert(0, str(ROOT / "src"))
 from ci.common import canonical, release_state, safe_member, version
 from ci.sign_ci import extract_payload
 from ci import publish
@@ -84,6 +85,11 @@ class ReleaseTests(unittest.TestCase):
             envelope = json.loads(feed.read_text())
             key.public_key().verify(base64.b64decode(envelope["signature"]), canonical(envelope["manifest"]))
             self.assertEqual(envelope["manifest"]["package_sha512"], hashlib.sha512(package.read_bytes()).hexdigest())
+            original = package.read_bytes()
+            # A retried signing job must be able to resume a partially uploaded draft.
+            subprocess.run([sys.executable, str(ROOT / "sign_release.py"), "--source", str(source),
+                            "--key", str(private), "--output", str(package)], check=True, capture_output=True)
+            self.assertEqual(package.read_bytes(), original)
 
     def test_signer_refuses_key_stored_inside_payload(self):
         with tempfile.TemporaryDirectory() as folder:
