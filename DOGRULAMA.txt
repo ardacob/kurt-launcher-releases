@@ -1,3 +1,23 @@
+Kurt Launcher 0.4.8 — Shaderpack atölyesi, 31 Ekim 2026
+
+180 uygulama testi + 9 yayın testi. Yerel Windows symlink senaryosu,
+hesapta symlink oluşturma yetkisi bulunmadığından atlanır.
+13 shader backend ve 3 shader arayüz testi eklendi:
+- Iris/OptiFine filtresi, gerçek Minecraft/paket sürümü kontrolü.
+- Vanilla profilde keşif; mod yükleyicisinin shader desteğiyle karışmaması.
+- Doğrulanmış ZIP indirme, ayrı profil shaderpacks klasörüne kurulum.
+- Bozuk hash/ZIP, yol taşması ve aynı adlı dosyada veri koruma.
+- İptal, kayıt yazma hatası ve kaldırma hatasında geri alma.
+- Yerel ZIP içe aktarma, profil ayrımı ve çalışan oyunda değişiklik engeli.
+- Shader menüsü, arama filtresi, indirilen dosya listesi ve profil değişimi.
+
+Canlı Modrinth: Minecraft 26.3 için Complementary Reimagined r5.9.3
+test profiline indirildi; SHA-512, ZIP ve yüzde doğrulandı. Paket kaldırıldı;
+mevcut dünya ve mod dosyaları korundu. Gerçek kullanıcı profili değiştirilmedi.
+Görselli 20 satırlık katalog Windows arayüzünde ayrıca incelendi.
+
+Önceki doğrulama kaydı:
+------------------------------------------------------------
 Kurt Launcher 0.4.6 — ortak oyun arşivi ve görünür otomatik kurulum, 31 Ekim 2026
 
 0.4.6 düzeltmesi: kurulum ve geri dönüş yardımcısı ana launcher penceresini

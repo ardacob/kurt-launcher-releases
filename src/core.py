@@ -23,7 +23,7 @@ import requests
 import minecraft_launcher_lib as mc
 from data_paths import resolve_data_folder, remember_data_folder
 
-APP_VERSION = "0.4.7"
+APP_VERSION = "0.4.8"
 MANIFEST = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 MODRINTH = "https://api.modrinth.com/v2"
 LOADERS = ("vanilla", "fabric", "forge", "neoforge", "quilt")
@@ -208,13 +208,13 @@ class Api:
                 temporary.unlink(missing_ok=True)
         return None
 
-    def download(self, file, target: Path, task: Task):
+    def download(self, file, target: Path, task: Task, validator=validate_jar):
         url = file["url"]
         if urlparse(url).scheme != "https" or urlparse(url).hostname != "cdn.modrinth.com":
-            raise LauncherError("Mod indirme adresi Modrinth CDN adresi değil.")
+            raise LauncherError("İndirme adresi Modrinth CDN adresi değil.")
         expected = file.get("hashes", {}).get("sha512")
         if not expected:
-            raise LauncherError("Mod dosyası için SHA-512 doğrulaması bulunamadı.")
+            raise LauncherError("Dosya için SHA-512 doğrulaması bulunamadı.")
         digest = hashlib.sha512()
         size = 0
         task.status("İndiriliyor: " + file["filename"])
@@ -230,8 +230,8 @@ class Api:
                         size += len(chunk)
                         task.progress(size)
             if digest.hexdigest().lower() != expected.lower():
-                raise LauncherError("Mod doğrulaması başarısız. Dosya kurulmadı.")
-            validate_jar(target)
+                raise LauncherError("Dosya doğrulaması başarısız. Dosya kurulmadı.")
+            validator(target)
         except Exception:
             target.unlink(missing_ok=True)
             raise
@@ -698,6 +698,9 @@ class Launcher:
         from snapshots import Snapshots
         self.snapshots = Snapshots(store, self.ensure_profile_idle)
         self.mods.before_change = self.snapshots.before_change
+        from shaders import ShaderManager
+        self.shaders = ShaderManager(store, self.api)
+        self.shaders.before_change = self.snapshots.before_change
 
     def ensure_profile_idle(self, profile):
         if profile.get("kind") != "server":

@@ -20,6 +20,7 @@ from core import APP_VERSION, LOADERS, Launcher, LauncherError, Cancelled, Store
 from servers import ServerManager
 from invites import PlayitManager, decode_invite
 from extras_ui import Enhancements
+from shader_ui import ShaderWorkshop
 from data_paths import DataLocationError, remember_data_folder, selected_data_folder
 
 CATEGORY_NAMES = {
@@ -259,7 +260,7 @@ class Worker(QRunnable):
             self.signals.error.emit(messages.get(name, f"İşlem tamamlanamadı ({name}). Bağlantıyı, dosya izinlerini ve ayarları kontrol edin."))
 
 
-class Window(Enhancements, QMainWindow):
+class Window(ShaderWorkshop, Enhancements, QMainWindow):
     def __init__(self, data_root=None, autostart=True):
         super().__init__()
         self.store = Store(data_root)
@@ -309,6 +310,7 @@ class Window(Enhancements, QMainWindow):
         self.build_servers()
         self.build_footer(column)
         self.build_tools()
+        self.build_shaders()
         self.reload_profiles()
         self.refresh_account()
         self.reload_servers()
@@ -347,7 +349,7 @@ class Window(Enhancements, QMainWindow):
         layout.addSpacing(20)
         layout.addWidget(label("OYUN ALANI", "sectionLabel"))
         self.nav = []
-        for index, text in enumerate(["◈    Oyun merkezi", "⊞    Mod atölyesi", "⚙    Ayarlar", "≡    Günlük", "◇    Sunucular", "▣    Kütüphane"]):
+        for index, text in enumerate(["◈    Oyun merkezi", "⊞    Mod atölyesi", "⚙    Ayarlar", "≡    Günlük", "◇    Sunucular", "▣    Kütüphane", "☀    Shaderpack’ler"]):
             item = button(text, lambda checked=False, i=index: self.navigate(i), "nav")
             item.setCheckable(True)
             item.setChecked(index==0)
@@ -355,7 +357,7 @@ class Window(Enhancements, QMainWindow):
             self.nav.append(item)
         self.main_navigation = QVBoxLayout()
         self.main_navigation.setSpacing(4)
-        for index in (0, 1, 5, 4):
+        for index in (0, 1, 6, 5, 4):
             self.main_navigation.addWidget(self.nav[index])
         layout.addLayout(self.main_navigation)
         layout.addStretch(1)
@@ -980,7 +982,7 @@ class Window(Enhancements, QMainWindow):
 
     def navigate(self,index):
         self.pages.setCurrentIndex(index)
-        self.breadcrumb.setText(["OYUN MERKEZİ","MOD ATÖLYESİ","AYARLAR","İŞLEM GÜNLÜĞÜ","SUNUCULAR","KÜTÜPHANE VE ARAÇLAR"][index])
+        self.breadcrumb.setText(["OYUN MERKEZİ","MOD ATÖLYESİ","AYARLAR","İŞLEM GÜNLÜĞÜ","SUNUCULAR","KÜTÜPHANE VE ARAÇLAR","SHADERPACK ATÖLYESİ"][index])
         for i,item in enumerate(self.nav):
             item.setChecked(i==index)
         self.sync_sidebar_selection()
@@ -990,6 +992,10 @@ class Window(Enhancements, QMainWindow):
             self.refresh_mods()
             if self.autostart and self.profile and self.profile["loader"] != "vanilla" and not self.worker and not self.results.count():
                 self.search_mods()
+        if index == 6:
+            self.refresh_shaders()
+            if self.autostart and self.profile and not self.worker and self.shader_query_state is None:
+                self.search_shaders()
 
     def log(self,message):
         from datetime import datetime
@@ -1014,6 +1020,7 @@ class Window(Enhancements, QMainWindow):
             elif isinstance(result,str):
                 self.report(result)
             self.refresh_mods()
+            self.refresh_shaders()
             self.refresh_account()
         worker.signals.done.connect(success)
         worker.signals.error.connect(self.job_error)
@@ -1046,6 +1053,7 @@ class Window(Enhancements, QMainWindow):
             item.setEnabled(True)
         self.profiles.setEnabled(True)
         self.search_input.setEnabled(True)
+        self.refresh_shaders()
 
     def job_error(self,message):
         self.close_after_server = False
@@ -1170,6 +1178,11 @@ class Window(Enhancements, QMainWindow):
         self.offset,self.total=0,0
         self.search_count.setText("Seçilen sürüm ve yükleyiciye göre filtrelenir.")
         self.refresh_mods()
+        self.clear_shader_results()
+        self.shader_query_state = None
+        self.shader_offset = self.shader_total = 0
+        self.shader_search_count.setText('Minecraft sürümüne ve shader desteğine göre filtrelenir.')
+        self.refresh_shaders()
         if hasattr(self, "tools_tabs"):
             self.update_rows = []
             self.updates_table.setRowCount(0)

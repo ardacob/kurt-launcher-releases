@@ -1,6 +1,16 @@
-# Kurt Launcher 0.4.6
+# Kurt Launcher 0.4.8
 
 [En yeni Windows sürümünü indir](https://github.com/ardacob/kurt-launcher-releases/releases/latest) · [Tüm sürümler](https://github.com/ardacob/kurt-launcher-releases/releases) · [Otomatik derleme](https://github.com/ardacob/kurt-launcher-releases/actions/workflows/release.yml)
+
+## 0.4.8: Shaderpack atölyesi
+
+Sol menüde **Shaderpack’ler** bölümünden Modrinth'in Iris/OptiFine paketlerini görselleriyle keşfedebilirsiniz. Arama, en çok indirilen, en yeni ve son güncellenen sıralaması, sayfalama ve shader desteği filtresi bulunur. Her satırda açıklama, indirme sayısı, gerçek paket sürümü, Minecraft uyumluluğu, yapımcı ve yayın tarihi gösterilir. Destek bilgileri yapımcının yayımladığı sürümlerden doğrulanır; donanımda çalışma garantisi değildir.
+
+**İndir** düğmesi ZIP'i yüzde göstergesiyle indirir, SHA-512 ve shader arşivi yapısını doğrular ve seçili profilin `shaderpacks` klasörüne kurar. Dosya mods klasörüne taşınmaz veya açılmaz. **İndirilen shaderpack’ler** sekmesinden yerel ZIP ekleyebilir, paketleri görebilir, kaldırabilir ve klasörü açabilirsiniz. Profillerin paketleri birbirinden ayrıdır; ortak oyun arşivinde ve profil yedeklerinde korunur.
+
+Shaderpack kullanmak için uygun Iris veya OptiFine kurulumu gerekir. Uyumlu Fabric/NeoForge profilinde **Iris’i kur** düğmesi Iris'i ve gerekli mod bağımlılıklarını kurar; desteklenmeyen Minecraft/yükleyici sürümünde işlem durur. OptiFine kullanıyorsanız kurulumunu ayrıca yapabilirsiniz. İndirdikten sonra paketi Minecraft'ın **Video ayarları → Shader Packs** menüsünden seçin. İndirildi etiketi, oyunda etkin olduğu anlamına gelmez. Oyun çalışırken paket değişikliği engellenir; değişiklik öncesi mevcut otomatik yedekleme tercihi kullanılır.
+
+Kaynaklar: [Modrinth arama API'si](https://docs.modrinth.com/api/operations/searchprojects/), [Iris indirme ve yükleyici bilgisi](https://irisshaders.dev/download/).
 
 ## 0.4.5: ortak oyun klasörü ve tam otomatik güncelleme
 

@@ -1,16 +1,14 @@
-# 0.4.7
+# 0.4.8
 
-Oyunların launcher klasöründen bağımsız kalsın; yeni launcher sürümleri otomatik kurulsun ve açılsın.
+Shaderpack atölyesi eklendi.
 
-- Otomatik kurulumdan sonra launcher penceresi görünür olarak açılır. Geri dönüş gerektiğinde önceki sürüm de görünür açılır.
-- Yeni uygulama kendi kurulum klasöründen başlar; Windows eski launcher klasörünü açık tutmaz.
+- Sol menüde Shaderpack’ler: Modrinth üzerinde arama, en çok indirilen, en yeni ve son güncellenen sıralaması, sayfalama.
+- Gerçek oyun görselleri ve logolar; açıklama, paket sürümü, indirme sayısı, yapımcı ve yayın tarihi.
+- Seçili Minecraft sürümü için gerçek paket sürümü doğrulaması ve Iris/OptiFine filtresi. Shader desteği, Fabric/Forge mod yükleyicisinden ayrı gösterilir.
+- Shaderpack ZIP’lerini yüzde ve aktarım bilgisiyle indirme; SHA-512 ve ZIP yapısı doğrulaması; seçili profilin shaderpacks klasörüne kurulum.
+- İndirilen paketler listesi, yerel ZIP ekleme, klasörü açma ve kaldırma. Profillerin shaderpack’leri ayrı tutulur ve ortak oyun arşivinde korunur.
+- Uyumlu Fabric/NeoForge profilleri için Iris ve gerekli mod bağımlılıklarını kurma düğmesi.
+- Paketler oyun içindeki Video ayarları → Shader Packs menüsünden seçilir. İndirilmiş paket, otomatik olarak oyunda etkinleştirilmiş sayılmaz.
+- Çalışan oyun sırasında değişiklik engellenir; mevcut otomatik yedekleme, iptal ve başarısız işlemde geri alma korumaları kullanılır.
 
-- Oyunlar, modlar, dünyalar ve sunucular kullanıcıya ait ortak KurtLauncher/data klasörüne kopyalanır; bütün dosyalar doğrulandıktan sonra bu konum kullanılır.
-- Aktarım tamamlandıktan sonra eski launcher klasörünü silmek oyunlarını silmez. Kurulu Minecraft/Java, modlar, son profil ve kullanıcı adı korunur.
-- Launcher kullanıcıya ait KurtLauncher/app klasörüne otomatik kurulur ve masaüstüne kısayol eklenir.
-- Yeni sürümler otomatik indirilir, Ed25519 imzaları doğrulanır, kurulur ve yeniden açılır. Uygulama açıkken de yeni sürümler aranır.
-- Oyun, sunucu veya başka bir işlem çalışıyorsa otomatik kurulum bitmesini bekler. Bu tercih Güncellemeler sayfasından kapatılabilir.
-- Yeni sürüm başarıyla açıldıktan sonra eski uygulama kopyası ve geçici dosyalar temizlenir. Açılamayan sürümde önceki uygulama geri yüklenir.
-- Eski bir indirme dosyasını açmak, kurulu daha yeni sürümü düşürmez.
-
-0.4.1–0.4.4'ten ilk geçiş için Güncellemeler bölümünü veya Windows ZIP'indeki EXE'yi kullanabilirsiniz. Aktarım bitene kadar eski oyun klasörünü koruyun; sonraki açılışlarda masaüstündeki Kurt Launcher kısayolunu kullanın.
+Ücretsiz otomatik derleme, imzalama, yayın ve launcher güncellemesi devam eder. Mevcut profiller, Minecraft kurulumları, modlar ve dünyalar korunur.

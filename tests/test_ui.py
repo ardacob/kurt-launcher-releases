@@ -17,8 +17,8 @@ app=QApplication.instance() or QApplication([])
 
 class UiTests(unittest.TestCase):
     def test_sidebar_groups_keep_page_routes_and_settings_at_bottom(self):
-        order = [self.window.main_navigation.itemAt(i).widget().property("page_index") for i in range(4)]
-        self.assertEqual(order, [0,1,5,4])
+        order = [self.window.main_navigation.itemAt(i).widget().property("page_index") for i in range(5)]
+        self.assertEqual(order, [0,1,6,5,4])
         self.assertIs(self.window.utility_navigation.itemAt(2).widget(), self.window.nav[2])
         self.window.nav[2].click()
         self.assertEqual(self.window.pages.currentIndex(), 2)
@@ -426,6 +426,54 @@ class UiTests(unittest.TestCase):
         self.assertIn("3–16",self.window.status.text())
         self.assertEqual(self.window.store.settings["offline_username"],"")
         self.assertEqual(self.window.pages.currentIndex(),0)
+
+    def test_shader_page_supports_vanilla_search_and_engine_sort_filters(self):
+        from core import Task
+        p = self.window.store.create('Shaders', '1.20.1', 'vanilla')
+        self.window.reload_profiles(p['id'])
+        self.window.nav[6].click()
+        self.assertEqual(self.window.pages.currentIndex(), 6)
+        self.assertIn('SHADERPACK', self.window.breadcrumb.text())
+        self.assertFalse(self.window.shader_iris.isEnabled())
+        self.window.shader_search_input.setText('water')
+        self.window.shader_offset = 40
+        with patch.object(self.window, 'run_job') as run, patch.object(self.window.launcher.shaders, 'catalog') as catalog:
+            self.window.shader_engine.setCurrentIndex(1)
+            run.assert_called_once()
+            run.call_args.args[1](Task())
+        self.assertEqual(catalog.call_args.args[1:3], ('water', 0))
+        self.assertEqual(catalog.call_args.kwargs['engine'], 'iris')
+
+    def test_shader_download_table_is_separate_from_mods_and_clears_on_profile_switch(self):
+        from PySide6.QtCore import Qt
+        import io, zipfile
+        p = self.window.store.create('Shaders', '1.20.1', 'fabric')
+        self.window.reload_profiles(p['id'])
+        stream = io.BytesIO()
+        with zipfile.ZipFile(stream, 'w') as archive:
+            archive.writestr('shaders/composite.fsh', 'void main() {}')
+        path = self.window.launcher.shaders.folder(p) / 'local.zip'
+        path.write_bytes(stream.getvalue())
+        self.window.refresh_shaders()
+        self.assertEqual(self.window.shader_installed.rowCount(), 1)
+        self.assertEqual(self.window.installed.rowCount(), 0)
+        self.assertEqual(self.window.shader_installed.item(0, 0).data(Qt.UserRole), 'local.zip')
+        other = self.window.store.create('Other', '1.21', 'vanilla')
+        self.window.reload_profiles(other['id'])
+        self.assertEqual(self.window.shader_installed.rowCount(), 0)
+        self.assertIsNone(self.window.shader_query_state)
+        self.assertTrue(path.is_file())
+
+    def test_shader_install_is_blocked_while_game_is_running(self):
+        from unittest.mock import Mock
+        p = self.window.store.create('Shaders', '1.20.1', 'fabric')
+        self.window.reload_profiles(p['id'])
+        self.window.launcher.process = Mock()
+        self.window.launcher.process.poll.return_value = None
+        with patch.object(self.window, 'run_job') as run:
+            self.window.install_shaderpack('pack', 'v1')
+        run.assert_not_called()
+        self.window.launcher.process = None
 
 
 if __name__=="__main__": unittest.main()
