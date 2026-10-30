@@ -1,0 +1,101 @@
+name: Windows build and signed release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kurt-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Test and build Windows
+    runs-on: windows-latest
+    timeout-minutes: 25
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      publish: ${{ steps.version.outputs.publish }}
+    env:
+      QT_QPA_PLATFORM: offscreen
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: '1'
+      KURT_DISABLE_AUTOSTART: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: Check version and existing releases
+        id: version
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python ci/check_release.py
+      - name: Install pinned dependencies
+        run: python -m pip install -r requirements.txt pyinstaller==6.22.3
+      - name: Prepare verified build assets
+        run: python ci/build.py assets
+      - name: Run application and release tests
+        run: |
+          python -m unittest discover -s tests -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m unittest discover -s ci/tests -v
+      - name: Build portable Windows EXE
+        run: python -m PyInstaller --noconfirm --clean --distpath dist --workpath .build/pyinstaller KurtLauncher.spec
+      - name: Verify packaged application starts
+        shell: pwsh
+        run: |
+          $env:KURT_DATA_DIR = Join-Path $env:RUNNER_TEMP 'kurt-smoke'
+          $process = Start-Process -FilePath (Join-Path $PWD 'dist/KurtLauncher.exe') -ArgumentList '--smoke-test' -WindowStyle Hidden -PassThru
+          if (-not $process.WaitForExit(90000)) { $process.Kill(); throw 'Packaged app did not exit within 90 seconds' }
+          if ($process.ExitCode -ne 0 -or -not (Test-Path (Join-Path $env:KURT_DATA_DIR 'smoke-test.ok'))) { throw 'Packaged app startup check failed' }
+      - name: Assemble clean Windows ZIP
+        run: python ci/build.py package
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-${{ steps.version.outputs.version }}
+          path: artifacts/*-Windows.zip
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Sign and publish release
+    needs: build
+    if: >-
+      needs.build.outputs.publish == 'true' &&
+      github.repository == 'ardacob/kurt-launcher-releases' &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: windows-${{ needs.build.outputs.version }}
+          path: artifacts
+      - name: Install signing dependency
+        run: python -m pip install cryptography==50.0.2
+      - name: Sign package and update feed
+        env:
+          KURT_SIGNING_KEY_B64: ${{ secrets.KURT_SIGNING_KEY_B64 }}
+        run: python ci/sign_ci.py
+      - name: Upload and publish complete release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python ci/publish.py

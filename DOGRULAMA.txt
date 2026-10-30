@@ -1,0 +1,97 @@
+Kurt Launcher 0.4.1 — doğrulama, 31 Ekim 2026
+
+GEÇTİ: 118 test (önceki 113 + 5 yeni senaryo).
+Yeni kontroller:
+- Sol menüde Oyun merkezi / Mod atölyesi / Kütüphane / Sunucular sırası;
+  alttaki Günlük/Ayarlar ve Güncellemeler kısayolunun doğru sayfaya gitmesi.
+- Arka plan güncelleme kontrolünün oyun/giriş kontrollerini kilitlememesi.
+- Gerçek Ed25519 anahtarlarıyla imzalı çevrimiçi duyurunun okunması ve
+  indirme sonrası SHA-512 doğrulaması (HTTP yanıtı test doubles ile).
+- Yayımlanmamış/404 kanalın güncel sürüm gibi gösterilmemesi.
+- Değiştirilmiş çevrimiçi duyurunun indirmeden önce reddedilmesi.
+
+GitHub yayın adresi yapılandırıldı. Depo ve ilk sürüm yayımlanmadan
+gerçek internet üzerinden güncelleme indirmesi doğrulanmış sayılmaz.
+Dosyalar yayıncı anahtarıyla imzalanıp yerel olarak doğrulandı.
+118 test ve paketlenmiş Windows EXE'sinin açılış kontrolü geçti.
+İlk yayının gerçek ağ doğrulaması yayımdan sonra ayrıca yapılır.
+
+Aşağıdaki 0.4.0 sonuçları önceki sürümün geçmiş doğrulamalarıdır.
+------------------------------------------------------------
+Kurt Launcher 0.4.0 — Windows x64 geliştirme sürümü
+Doğrulama: 30–31 Ekim 2026
+
+GEÇTİ — 113 otomatik test
+- Önceki 76 test: profil izolasyonu, veri koruma, bağımlılık çözümü,
+  mod sıralaması, kullanıcı adıyla giriş, büyük sayılarda yüzde,
+  sunucu EULA kapısı, davet kodları ve Playit yerel/API senaryoları.
+- Profil/dünya/mod ve sürüm bilgisini yedekten geri getirme.
+- Bozuk yedek, farklı profil, yol taşması, iptal ve otomatik saklama sınırı.
+- Oyun/sunucu çalışırken yedeklemeyi ve değişiklikleri engelleme.
+- mrpack yolu, izinli indirme adresi, yinelenen kayıt, optional dosyalar,
+  override katmanları, profil izolasyonu ve başarısız kurulumun temizliği.
+- Paketin önizleme sonrasında değiştirilmesinin tespiti.
+- Tanınan uyumsuz paket modunun kurulmaması; JAR/dünya içermeyen dışa aktarım.
+- SHA-512 hatası ve güvenilmeyen yönlendirmenin reddi.
+- Sunucu modlarını dosya adı yerine hash ile karşılaştırma.
+- Mod güncelleme, sabitleme, başarısız indirmede eski modun/lock'un korunması.
+- Eşleştirmede eski Modrinth sürümünün değiştirilmesi ve lock güncellemesi.
+- Yerel tanı/redaksiyon, options.txt koruma, koleksiyonların kalıcılığı.
+- KURT1/KURT2 kodları ve sıkıştırma bombası sınırı.
+- Sunucu ayarları ve kullanıcı adı modunda izin listesi yönetimi.
+- İmzalı güncelleme hazırlığı, yabancı anahtar, değiştirilmiş dosya,
+  eski sürüm ve veri klasörüne yazma girişimlerinin reddi.
+- Yapılandırılmamış çevrimiçi kanalda doğru bildirim.
+- Minecraft indirme adaptörü: byte ilerlemesi, hash hatasında eski dosyanın
+  korunması ve hata sonrası kütüphane referanslarının geri yüklenmesi.
+- Qt: araç sekmeleri, arka planda yedek, tekrar deneme, koleksiyon/son profil,
+  onaysız oyun başlatmayan karşılaştırma ve yedekli görüntü ayarı akışları.
+
+GEÇTİ — gerçek servis / dosya denemesi
+İzole work/v040-live klasöründe, gerçek Mojang ve Modrinth servisleriyle:
+1. Minecraft 1.20.1 / Fabric 0.20.1 için Fabric API ve Sodium kuruldu.
+2. İki gerçek modun .mrpack dışa aktarımı oluşturuldu.
+3. Paket yeni ve ayrı bir profile indirildi; SHA-512 içerikleri eşleşti.
+4. Oyun/yükleyici sabitlemesi ve sunucu listesi karşılaştırması eşleşti.
+5. Uyumlu güncelleme taraması tamamlandı (bu profilde yeni aday yoktu).
+6. Mojang sürüm dosyası yeni akış adaptörüyle indirildi ve SHA-1 eşleşti.
+7. Profil yedeği geri yüklendi; yedek sonrası eklenen ayar dosyası kalktı.
+8. Sodium'un altı gerçek galeri görseli yerel önbelleğe alındı.
+
+GEÇTİ — gerçek Windows güncelleme yardımcısı
+Ayrı uygulama klasörleri ve bu test için derlenen küçük EXE'lerle gerçek
+assets/update-worker.ps1 çalıştırıldı:
+- Yeni uygulama başlangıç sağlık dosyasını yazınca kurulum başarılı oldu.
+- Açılmayan yeni uygulamada eski EXE geri getirildi; yeni eklenen dosya kaldırıldı.
+- data/world.dat içeriği iki senaryoda da değişmedi.
+Bu testler canlı kullanıcı kurulumunda yapılmadı.
+
+PAKET DOĞRULAMASI
+- PyInstaller ile Python gerektirmeyen Windows x64 EXE derlenir.
+- --smoke-test, taze deneme verisinde Qt arayüzünü, yedi araç sekmesini,
+  Ed25519 anahtarını, Windows hesap kasası modülünü ve paketli Playit yardımcısının
+  sabit SHA-256/--help kontrolünü doğrular. Sonuç work/packaged-v040-smoke altındadır.
+- Windows yerel Qt görünümü incelendi; Onizleme.png, Kutuphane.png,
+  PaketPaylasimi.png, Performans.png ve ModAyrintilari.png güncellendi.
+- Dağıtım ZIP'i data, __pycache__, .pyc ve özel imzalama anahtarı içermez.
+- Windows Authenticode yayıncı sertifikası uygulanmadı. Ed25519 güncelleme
+  imzası Windows'un yayıncı sertifikasından farklıdır.
+
+TAMAMLANMASI DIŞ HESAP/ORTAM GEREKTİREN DOĞRULAMALAR
+- Microsoft uygulama kaydı ve Minecraft API onayı sağlanmadı. Gerçek Microsoft
+  oturum açma uçtan uca denenmedi. Kullanıcı adıyla giriş bundan bağımsızdır.
+- Playit hesabı kullanıcı adına bağlanmadı. Gerçek herkese açık tünel ve iki
+  farklı ağdaki oyuncuyla Minecraft oturumu denenmedi. Davet/mod eşleştirme
+  kodu ve API senaryoları test edildi; gerçek bağlantı garantisi değildir.
+- Minecraft sunucusu için EULA otomatik kabul edilmedi. Gerçek dünya
+  başlatma, oyuncu katılımı ve sunucu kapanış yedeği gerçek oyun oturumunda
+  denenmedi; sunucu süreç/komut/konfigürasyon akışları test doubles ile sınandı.
+- Çevrimiçi güncelleme yayın adresi henüz kurulmadı. Yerel imzalı paket
+  doğrulaması/hazırlığı ve Windows değişim/geri dönüş yardımcısı çalışır.
+- Tüm Minecraft arşiv sürümleri, tüm mod kombinasyonları, sürücüler ve farklı
+  Windows bilgisayarlarında kapsamlı uyumluluk/performans testi yapılmadı.
+- Üçüncü taraf servislerin erişilebilirliği/kotaları garanti edilmez.
+
+Önceki 0.3.x gerçek Minecraft 1.20.1 / Fabric / Java 17 kurulumları ve
+Playit yerel IPC denemeleri geçmiş doğrulamalardır; 0.4.0'da gerçek oyun
+başlatma veya gerçek internet tüneli denenmiş gibi değerlendirilmemelidir.

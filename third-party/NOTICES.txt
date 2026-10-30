@@ -1,0 +1,82 @@
+altgraph 0.17.5
+License: MIT
+Source: https://altgraph.readthedocs.io
+
+certifi 2026.10.23
+License: MPL-2.0
+Source: https://github.com/certifi/python-certifi
+
+charset-normalizer 3.5.2
+License: MIT
+Source: Changelog, https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md; Documentation, https://charset-normalizer.readthedocs.io/; Code, https://github.com/jawah/charset_normalizer; Issue tracker, https://github.com/jawah/charset_normalizer/issues
+
+idna 3.20
+License: BSD-3-Clause
+Source: Changelog, https://github.com/kjd/idna/blob/master/HISTORY.md; Issue tracker, https://github.com/kjd/idna/issues; Source, https://github.com/kjd/idna
+
+jaraco.classes 3.4.0
+License: See package notices
+Source: https://github.com/jaraco/jaraco.classes
+
+jaraco.context 6.1.2
+License: MIT
+Source: Source, https://github.com/jaraco/jaraco.context
+
+jaraco.functools 4.6.0
+License: MIT
+Source: Source, https://github.com/jaraco/jaraco.functools
+
+keyring 25.7.0
+License: MIT
+Source: Source, https://github.com/jaraco/keyring
+
+minecraft-launcher-lib 8.0
+License: BSD-2-Clause
+Source: Documentation, https://minecraft-launcher-lib.readthedocs.io/en/stable/index.html; Issues, https://codeberg.org/JakobDev/minecraft-launcher-lib/issues; Source, https://codeberg.org/JakobDev/minecraft-launcher-lib; Changelog, https://minecraft-launcher-lib.readthedocs.io/en/stable/changelog.html; Donation, https://ko-fi.com/jakobdev
+
+more-itertools 11.2.1
+License: MIT
+Source: Documentation, https://more-itertools.readthedocs.io/en/stable/; Homepage, https://github.com/more-itertools/more-itertools
+
+packaging 26.3
+License: Apache-2.0 OR BSD-2-Clause
+Source: Documentation, https://packaging.pypa.io/; Source, https://github.com/pypa/packaging
+
+pefile 2024.8.26
+License: MIT
+Source: https://github.com/erocarrera/pefile
+
+pyinstaller 6.22.3
+License: GPLv2-or-later with a special exception which allows to use PyInstaller to build and distribute non-free programs (including commercial ones)
+Source: Homepage, https://pyinstaller.org; Documentation, https://pyinstaller.org; Source Code, https://github.com/pyinstaller/pyinstaller; Release Notes, https://pyinstaller.org/en/stable/CHANGES.html
+
+pyinstaller-hooks-contrib 2026.9
+License: See package notices
+Source: https://github.com/pyinstaller/pyinstaller-hooks-contrib
+
+PySide6_Essentials 6.12.0
+License: LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+Source: Homepage, https://pyside.org; Documentation, https://doc.qt.io/qtforpython; Repository, https://code.qt.io/cgit/pyside/pyside-setup.git/; Changelog, https://code.qt.io/cgit/pyside/pyside-setup.git/tree/doc/changelogs; Tracker, https://qt-project.atlassian.net/browse/PYSIDE
+
+pywin32-ctypes 0.2.3
+License: BSD-3-Clause
+Source: https://github.com/enthought/pywin32-ctypes
+
+requests 2.34.2
+License: Apache-2.0
+Source: Documentation, https://requests.readthedocs.io; Source, https://github.com/psf/requests
+
+setuptools 84.2.1
+License: MIT
+Source: Source, https://github.com/pypa/setuptools; Documentation, https://setuptools.pypa.io/; Changelog, https://setuptools.pypa.io/en/stable/history.html
+
+shiboken6 6.12.0
+License: LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+Source: Homepage, https://pyside.org; Documentation, https://doc.qt.io/qtforpython; Repository, https://code.qt.io/cgit/pyside/pyside-setup.git/; Changelog, https://code.qt.io/cgit/pyside/pyside-setup.git/tree/doc/changelogs; Tracker, https://qt-project.atlassian.net/browse/PYSIDE
+
+urllib3 2.8.0
+License: MIT
+Source: Changelog, https://github.com/urllib3/urllib3/blob/main/CHANGES.rst; Documentation, https://urllib3.readthedocs.io; Code, https://github.com/urllib3/urllib3; Issue tracker, https://github.com/urllib3/urllib3/issues; Security policy, https://urllib3.readthedocs.io/en/latest/security.html
+
+Qt / Qt for Python sources: https://code.qt.io/qt/qtbase.git/ and https://code.qt.io/pyside/pyside-setup.git/ . PySide6 and Shiboken 6.12.0. Source launcher and rebuild script are included; DLLs are dynamically loaded.
+Python source: https://www.python.org/downloads/source/

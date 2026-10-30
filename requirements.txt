@@ -1,0 +1,5 @@
+PySide6-Essentials==6.12.0
+minecraft-launcher-lib==8.0
+requests==2.34.2
+keyring==25.7.0
+cryptography==50.0.2

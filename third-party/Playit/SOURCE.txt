@@ -1,0 +1,5 @@
+playitd 1.2.0 Windows x64, official signed binary
+Source: https://github.com/playit-cloud/playit-agent/tree/v1.2.0
+Release: https://github.com/playit-cloud/playit-agent/releases/tag/v1.2.0
+SHA256: e8dff30a9269a10d2c6786c95a0618567772e441d07dd7ebe3c1a37d3f35534d
+No service installation or paid plan is used.
