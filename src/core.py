@@ -22,7 +22,7 @@ from urllib.parse import urlparse
 import requests
 import minecraft_launcher_lib as mc
 
-APP_VERSION = "0.4.2"
+APP_VERSION = "0.4.3"
 MANIFEST = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 MODRINTH = "https://api.modrinth.com/v2"
 LOADERS = ("vanilla", "fabric", "forge", "neoforge", "quilt")

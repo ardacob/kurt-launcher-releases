@@ -51,8 +51,11 @@ def main():
     parser.add_argument("--notes-file", type=Path)
     args = parser.parse_args()
     source = args.source.resolve()
-    version = constant(source / "src/core.py", "APP_VERSION")
-    top_level = constant(source / "src/updater.py", "TOP_LEVEL")
+    # build.ps1 also supports a runtime-only folder build. CI distributions include
+    # source metadata; manual folder builds use the publisher tool's source tree.
+    metadata = source if (source / "src/core.py").is_file() else Path(__file__).resolve().parent
+    version = constant(metadata / "src/core.py", "APP_VERSION")
+    top_level = constant(metadata / "src/updater.py", "TOP_LEVEL")
     if args.key.resolve().is_relative_to(source):
         parser.error("Private key must be outside the release folder.")
     key = Ed25519PrivateKey.from_private_bytes(args.key.read_bytes())

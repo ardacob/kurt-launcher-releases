@@ -1,10 +1,12 @@
-Kurt Launcher 0.4.2 — otomatik yayın doğrulaması, 31 Ekim 2026
+Kurt Launcher 0.4.3 — otomatik yayın doğrulaması, 31 Ekim 2026
 
-Yerel doğrulama: 118 uygulama testi ve 8 yayın testi geçti.
+Yerel doğrulama: 118 uygulama testi ve 9 yayın testi geçti.
 Yeni kontroller: sürüm yükseltme ve eski sürümü koruma, yayıncının anahtarıyla
 imzalama uyumluluğu, imzalama tekrarının aynı paketi üretmesi, arşivde
 yol taşması / data / bilinmeyen klasör / yinelenen dosya reddi,
 PR ve başka depolarda yayının engellenmesi.
+Ek kontrol: build.ps1 ile oluşturulan, yanında src olmayan klasör
+derlemesinin aynı yayıncı aracıyla imzalanıp güncelleyiciyle doğrulanması.
 
 GitHub Actions her yayın için Windows testlerini, PyInstaller derlemesini ve
 paketlenmiş EXE'nin --smoke-test açılış kontrolünü yeniden çalıştırır.

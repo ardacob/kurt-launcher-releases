@@ -104,6 +104,26 @@ class ReleaseTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn(b"outside the release folder", result.stderr)
 
+    def test_manual_runtime_folder_build_can_still_be_signed(self):
+        from core import Store
+        from updater import Updater
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            source = root / "runtime"
+            (source / "_internal/assets").mkdir(parents=True)
+            (source / "KurtLauncher.exe").write_bytes(b"folder-build-executable")
+            key = Ed25519PrivateKey.generate()
+            public = key.public_key().public_bytes_raw()
+            (source / "_internal/assets/update-public-key.bin").write_bytes(public)
+            private = root / "private.bin"
+            private.write_bytes(key.private_bytes_raw())
+            package = root / "folder.kurtupdate"
+            subprocess.run([sys.executable, str(ROOT / "sign_release.py"), "--source", str(source),
+                            "--key", str(private), "--output", str(package)], check=True, capture_output=True)
+            manifest = Updater(Store(root / "data"), public).inspect(package, allow_current=True)
+            self.assertEqual(manifest["version"], version())
+            self.assertIn("_internal/assets/update-public-key.bin", manifest["files"])
+
     def test_publication_rejects_pull_requests_and_other_repositories(self):
         with patch.dict(os.environ, {"GITHUB_REPOSITORY": "fork/repo", "GITHUB_REF": "refs/heads/main",
                                      "GITHUB_EVENT_NAME": "pull_request"}), patch.object(publish, "request") as api:
