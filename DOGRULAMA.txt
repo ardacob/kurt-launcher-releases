@@ -1,3 +1,20 @@
+Kurt Launcher 0.4.2 — otomatik yayın doğrulaması, 31 Ekim 2026
+
+Yerel doğrulama: 118 uygulama testi ve 8 yayın testi geçti.
+Yeni kontroller: sürüm yükseltme ve eski sürümü koruma, yayıncının anahtarıyla
+imzalama uyumluluğu, imzalama tekrarının aynı paketi üretmesi, arşivde
+yol taşması / data / bilinmeyen klasör / yinelenen dosya reddi,
+PR ve başka depolarda yayının engellenmesi.
+
+GitHub Actions her yayın için Windows testlerini, PyInstaller derlemesini ve
+paketlenmiş EXE'nin --smoke-test açılış kontrolünü yeniden çalıştırır.
+Yalnız başarıdan sonra ayrı Linux işinde Ed25519 imza atılır; dört dosya
+taslağa yüklenip SHA256 değerleri doğrulandıktan sonra yayın yapılır.
+Çalıştırma kanıtı: https://github.com/ardacob/kurt-launcher-releases/actions
+Özel anahtar ve kullanıcı data klasörü dağıtım dosyalarına eklenmez.
+
+Önceki sürümün doğrulama kaydı:
+------------------------------------------------------------
 Kurt Launcher 0.4.1 — doğrulama, 31 Ekim 2026
 
 GEÇTİ: 118 test (önceki 113 + 5 yeni senaryo).

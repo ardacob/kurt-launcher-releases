@@ -1,8 +1,10 @@
 """Prepare pinned assets, then assemble a clean portable Windows ZIP."""
 import argparse
+import importlib.metadata
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import urllib.request
 import zipfile
 from common import ROOT, constant, sha256, version
@@ -45,6 +47,22 @@ def package():
     for name in ("src", "assets", "third-party", "tests"):
         shutil.copytree(ROOT / name, folder / name,
                         ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"))
+    notices = folder / "third-party/CI-BUILD-NOTICES.txt"
+    distributions = sorted(importlib.metadata.distributions(), key=lambda d: d.metadata["Name"].lower())
+    notices.write_text("Python " + sys.version + "\n\n" + "\n".join(
+        f"{dist.metadata['Name']} {dist.version}" for dist in distributions), encoding="utf-8")
+    # Include licenses from the actual build environment as dependencies evolve.
+    for dist in distributions:
+        for entry in dist.files or []:
+            if "licenses" in entry.parts or entry.name.upper().startswith(("LICENSE", "COPYING")):
+                origin = Path(dist.locate_file(entry))
+                if origin.is_file() and origin.suffix not in (".py", ".pyc"):
+                    target = folder / "third-party/ci" / dist.metadata["Name"] / str(entry).replace("..", "_")
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(origin, target)
+    python_license = Path(sys.base_prefix) / "LICENSE.txt"
+    if python_license.is_file():
+        shutil.copy2(python_license, folder / "third-party/Python-LICENSE.txt")
     for name in ("README.md", "DOGRULAMA.txt", "requirements.txt", "build.ps1", "KurtLauncher.spec",
                  "Baslat.cmd", "sign_release.py", "GUNCELLEME-YAYINLAMA.md"):
         shutil.copy2(ROOT / name, folder / name)

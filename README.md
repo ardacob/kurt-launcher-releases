@@ -1,4 +1,4 @@
-# Kurt Launcher 0.4.1
+# Kurt Launcher 0.4.2
 
 [En yeni Windows sürümünü indir](https://github.com/ardacob/kurt-launcher-releases/releases/latest) · [Tüm sürümler](https://github.com/ardacob/kurt-launcher-releases/releases) · [Otomatik derleme](https://github.com/ardacob/kurt-launcher-releases/actions/workflows/release.yml)
 
