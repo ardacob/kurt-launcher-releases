@@ -238,9 +238,9 @@ class Api:
 
 
 class Store:
-    def __init__(self, root: Path | None = None):
+    def __init__(self, root: Path | None = None, *, update_from: Path | None = None):
         base = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parents[1]
-        self.root = (Path(root) if root is not None else resolve_data_folder(base)).resolve()
+        self.root = (Path(root) if root is not None else resolve_data_folder(base, update_from=update_from)).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         self.minecraft = self.root / "minecraft"
         self.minecraft.mkdir(exist_ok=True)
@@ -250,7 +250,7 @@ class Store:
         self.servers = read_json(self.root / "servers.json", [])
         self.settings.setdefault("login_mode", "microsoft" if self.account else "offline")
         self.settings.setdefault("offline_username", "")
-        if root is None and not os.environ.get("KURT_DATA_DIR"):
+        if root is None and (not os.environ.get("KURT_DATA_DIR") or update_from is not None):
             remember_data_folder(self.root)
 
     def save(self):

@@ -1,17 +1,18 @@
+import os
 import sys
 from pathlib import Path
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import QLockFile
 from PySide6.QtWidgets import QApplication, QMessageBox, QInputDialog, QFileDialog
 from core import Store
-from data_paths import (DataLocationError, DataChoiceRequired, DataFolderMissing,
+from data_paths import (DataLocationError, DataChoiceRequired,
                         remember_data_folder, selected_data_folder)
 from ui import Window
 
 
-def open_store():
+def open_store(update_from=None):
     try:
-        return Store()
+        return Store(update_from=update_from)
     except DataLocationError as exc:
         if "--smoke-test" in sys.argv:
             raise
@@ -39,7 +40,10 @@ def main():
     app.setApplicationName("Kurt Launcher")
     app.setOrganizationName("KurtLauncher")
     try:
-        store = open_store()
+        worker_data = None
+        if "--update-health" in sys.argv and "--smoke-test" not in sys.argv and os.environ.get("KURT_DATA_DIR"):
+            worker_data = Path(os.environ["KURT_DATA_DIR"]).resolve()
+        store = open_store(update_from=worker_data)
         if store is None:
             return 0
         lock = QLockFile(str(store.root / "launcher.lock"))
@@ -77,7 +81,10 @@ def main():
             position = sys.argv.index("--update-health")
             if position + 1 < len(sys.argv):
                 health = Path(sys.argv[position + 1]).resolve()
-                if health.parent == (store.root / "updates").resolve() and health.suffix == ".ok":
+                health_roots = {(store.root / "updates").resolve()}
+                if worker_data is not None:
+                    health_roots.add((worker_data / "updates").resolve())
+                if health.parent in health_roots and health.suffix == ".ok":
                     # Old update workers pass KURT_DATA_DIR. Remember it for ZIP
                     # launches too, without registering isolated smoke-test data.
                     remember_data_folder(store.root)

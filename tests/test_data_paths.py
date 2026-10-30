@@ -19,7 +19,7 @@ class DataPathsTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.config = self.root / "LocalAppData/KurtLauncher/data-location.json"
         self.addCleanup(patch.stopall)
         patch("data_paths.location_file", return_value=self.config).start()
@@ -79,6 +79,36 @@ class DataPathsTests(unittest.TestCase):
         self.assertEqual(actual.root, old.root)
         self.assertEqual(len(actual.profiles), 1)
         self.assertEqual(json.loads((empty.root / "profiles.json").read_text()), [])
+
+    def test_old_update_worker_with_empty_043_data_finds_the_real_041_archive(self):
+        _, old, _ = self.legacy()
+        new_base = self.root / "KurtLauncher-0.4.3"
+        empty = Store(new_base / "data")
+        empty.save()
+        with patch.dict(os.environ, {"KURT_DATA_DIR": str(empty.root)}), \
+                patch.object(core, "__file__", str(new_base / "src/core.py")):
+            updated = Store(update_from=empty.root)
+        self.assertEqual(updated.root, old.root)
+        self.assertEqual(remembered_data_folder(), old.root)
+        self.assertEqual(json.loads((empty.root / "profiles.json").read_text()), [])
+
+    def test_old_update_worker_cannot_replace_remembered_world_with_empty_data(self):
+        _, old, _ = self.legacy()
+        remember_data_folder(old.root)
+        empty = Store(self.root / "fresh-043/data")
+        empty.save()
+        with patch.dict(os.environ, {"KURT_DATA_DIR": str(empty.root)}):
+            updated = Store(update_from=empty.root)
+        self.assertEqual(updated.root, old.root)
+        self.assertEqual(remembered_data_folder(), old.root)
+
+    def test_old_update_worker_preserves_custom_populated_data_directory(self):
+        _, old, _ = self.legacy("KurtLauncher-private-games")
+        self.legacy("KurtLauncher-other-games")
+        with patch.dict(os.environ, {"KURT_DATA_DIR": str(old.root)}):
+            updated = Store(update_from=old.root)
+        self.assertEqual(updated.root, old.root)
+        self.assertEqual(remembered_data_folder(), old.root)
 
     def test_new_install_uses_one_user_archive_independent_of_exe_folder(self):
         first = self.start_at(self.root / "first")

@@ -52,6 +52,19 @@ def selected_data_folder(folder):
     raise DataLocationError("Bu klasörde eski Kurt Launcher oyun verileri bulunamadı. Eski launcher klasörünü veya içindeki data klasörünü seçin.")
 
 
+def has_profiles(folder):
+    for name in ("profiles.json", "servers.json"):
+        path = Path(folder) / name
+        try:
+            if path.is_file() and path.stat().st_size <= 8 * 1024 * 1024:
+                items = json.loads(path.read_text(encoding="utf-8"))
+                if isinstance(items, list) and any(isinstance(item, dict) and item.get("id") for item in items):
+                    return True
+        except (OSError, ValueError):
+            continue
+    return False
+
+
 def remember_data_folder(folder):
     folder = Path(folder).resolve()
     if not folder.is_dir() or folder.parent == folder:
@@ -103,26 +116,30 @@ def legacy_candidates(base):
                 continue
             for folder in (child / "data", child / "KurtLauncher/data"):
                 try:
-                    if has_game_data(folder):
+                    if has_profiles(folder):
                         found.add(folder.resolve())
                 except OSError:
                     continue
     return sorted(found, key=lambda p: str(p).casefold())
 
 
-def resolve_data_folder(base):
+def resolve_data_folder(base, *, update_from=None):
     override = os.environ.get("KURT_DATA_DIR")
-    if override:
+    if override and update_from is None:
         return Path(override).resolve()
     remembered = remembered_data_folder()
     if remembered is not None:
         return remembered
+    if update_from is not None and has_profiles(update_from):
+        return Path(update_from).resolve()
     adjacent = Path(base).resolve() / "data"
-    if has_game_data(adjacent):
+    if has_profiles(adjacent):
         return adjacent
     candidates = legacy_candidates(base)
     if len(candidates) > 1:
         raise DataChoiceRequired(candidates)
     if candidates:
         return candidates[0]
+    if has_game_data(adjacent):
+        return adjacent
     return location_file().parent / "data"
