@@ -1,4 +1,7 @@
-Kurt Launcher 0.4.5 — ortak oyun arşivi ve otomatik kurulum, 31 Ekim 2026
+Kurt Launcher 0.4.6 — ortak oyun arşivi ve görünür otomatik kurulum, 31 Ekim 2026
+
+0.4.6 düzeltmesi: kurulum ve geri dönüş yardımcısı ana launcher penceresini
+gizlemek yerine görünür açar. Arka plan PowerShell yardımcısı penceresiz kalır.
 
 Yerel doğrulama: 164 uygulama + 9 yayın testi. Windows symlink oluşturma
 yetkisi bulunmadığından yalnız bu symlink senaryosu yerelde atlanır.

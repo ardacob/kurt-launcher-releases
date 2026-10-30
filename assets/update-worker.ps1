@@ -84,7 +84,7 @@ try {
     }
     $env:KURT_DATA_DIR = $updatePlan.data
     $healthPath = $updatePlan.health
-    $newProcess = Start-Process -FilePath (Join-Path $installPath 'KurtLauncher.exe') -ArgumentList @('--update-health', ('"' + $healthPath + '"')) -WindowStyle Hidden -PassThru
+    $newProcess = Start-Process -FilePath (Join-Path $installPath 'KurtLauncher.exe') -ArgumentList @('--update-health', ('"' + $healthPath + '"')) -WindowStyle Normal -PassThru
     for ($attempt=0; $attempt -lt 45; $attempt++) {
         if (Test-Path -LiteralPath $healthPath) {
             'Update OK' | Set-Content -LiteralPath ($Plan + '.result')
@@ -140,6 +140,6 @@ try {
         $failurePath = Join-Path $updatePlan.data 'updates\last-failure.json'
         [IO.File]::WriteAllText($failurePath, ($failed | ConvertTo-Json), (New-Object Text.UTF8Encoding($false)))
     } catch { }
-    if ($oldExited -and (Test-Path -LiteralPath $oldExecutable)) { Start-Process -FilePath $oldExecutable -ArgumentList '--no-self-install' -WindowStyle Hidden }
+    if ($oldExited -and (Test-Path -LiteralPath $oldExecutable)) { Start-Process -FilePath $oldExecutable -ArgumentList '--no-self-install' -WindowStyle Normal }
     exit 1
 }
