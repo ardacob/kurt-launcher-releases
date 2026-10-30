@@ -110,18 +110,31 @@ class Updater:
             shutil.rmtree(stage, ignore_errors=True)
             raise
 
-    def launch_helper(self, stage):
+    def launch_helper(self, stage, *, installation=None, obsolete=None, redirect_hash=None):
         if not getattr(sys, "frozen", False) or os.name != "nt":
             raise LauncherError("Uygulama içi güncelleme paketlenmiş Windows EXE'sinde uygulanır.")
         stage = Path(stage).resolve()
         if not stage.is_relative_to((self.store.root / "updates").resolve()):
             raise LauncherError("Güncelleme hazırlık klasörü geçersiz.")
-        installation = Path(sys.executable).resolve().parent
+        current_executable = Path(sys.executable).resolve()
+        installation = Path(installation).resolve() if installation is not None else current_executable.parent
         if installation == Path(installation.anchor) or len(installation.parts) < 3:
             raise LauncherError("Launcher'ı kendine ait bir klasöre taşıyın.")
         task_id = uuid.uuid4().hex
         plan = {"installation": str(installation), "stage": str(stage), "pid": os.getpid(),
                 "health": str(self.store.root / "updates" / (task_id + ".ok")), "data": str(self.store.root)}
+        from installation import app_folder
+        if installation == app_folder():
+            plan["managed"] = True
+            plan["create_shortcut"] = os.environ.get("KURT_SKIP_SHORTCUT") != "1"
+        if obsolete is not None:
+            obsolete = Path(obsolete).resolve()
+            if obsolete != current_executable or obsolete.name.lower() != "kurtlauncher.exe":
+                raise LauncherError("Eski launcher yolu geçersiz.")
+            plan["obsolete_executable"] = str(obsolete)
+            plan["obsolete_sha512"] = digest(obsolete)
+        if redirect_hash:
+            plan["redirect_sha512"] = redirect_hash
         path = self.store.root / "updates" / (task_id + ".json")
         atomic_json(path, plan)
         helper = self.store.root / "updates" / (task_id + ".ps1")

@@ -23,7 +23,7 @@ import requests
 import minecraft_launcher_lib as mc
 from data_paths import resolve_data_folder, remember_data_folder
 
-APP_VERSION = "0.4.4"
+APP_VERSION = "0.4.5"
 MANIFEST = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 MODRINTH = "https://api.modrinth.com/v2"
 LOADERS = ("vanilla", "fabric", "forge", "neoforge", "quilt")
@@ -238,9 +238,13 @@ class Api:
 
 
 class Store:
-    def __init__(self, root: Path | None = None, *, update_from: Path | None = None):
+    def __init__(self, root: Path | None = None, *, update_from: Path | None = None,
+                 migrate_legacy=True, migration_progress=lambda *args: None):
         base = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parents[1]
         self.root = (Path(root) if root is not None else resolve_data_folder(base, update_from=update_from)).resolve()
+        if root is None and migrate_legacy and (not os.environ.get("KURT_DATA_DIR") or update_from is not None):
+            from data_migration import ensure_shared_data
+            self.root = ensure_shared_data(self.root, progress=migration_progress)
         self.root.mkdir(parents=True, exist_ok=True)
         self.minecraft = self.root / "minecraft"
         self.minecraft.mkdir(exist_ok=True)

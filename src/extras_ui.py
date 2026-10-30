@@ -70,6 +70,10 @@ class Enhancements:
         self.active_job = None
         self.update_checker = None
         self.online_release = None
+        self.auto_update_busy = False
+        self.auto_update_failed_version = None
+        self.pending_update_stage = None
+        self.force_auto_update = False
         self.recent_rows = []
         layout = self.page()
         title = text("Kütüphane ve araçlar")
@@ -518,7 +522,11 @@ class Enhancements:
         self.automatic_update_check.setChecked(self.store.settings.get("auto_update_check", True))
         self.automatic_update_check.toggled.connect(self.save_update_preferences)
         box.addWidget(self.automatic_update_check)
-        box.addWidget(text("Güncelleme bulunduğunda bildirilir; indirme ve yeniden başlatma senin onayınla yapılır. Yeni bir ücretli hizmet veya abonelik açılmaz."))
+        self.automatic_update_install = QCheckBox("Yeni sürümü otomatik indir, kur ve yeniden aç")
+        self.automatic_update_install.setChecked(self.store.settings.get("auto_install_updates", True))
+        self.automatic_update_install.toggled.connect(self.save_update_preferences)
+        box.addWidget(self.automatic_update_install)
+        box.addWidget(text("Yeni sürüm imzası doğrulanarak otomatik kurulur. Oyun, sunucu veya başka bir işlem çalışıyorsa kapanması beklenir. Başarılı açılıştan sonra eski uygulama dosyaları temizlenir. Oyunların ortak klasörde korunur."))
         row = QHBoxLayout()
         self.tools_button("Güncellemeleri kontrol et", self.check_launcher_updates, row)
         self.tools_button("İmzalı .kurtupdate paketi seç", self.select_launcher_update, row)
@@ -535,6 +543,8 @@ class Enhancements:
 
     def save_update_preferences(self):
         self.store.settings["auto_update_check"] = self.automatic_update_check.isChecked()
+        self.store.settings["auto_install_updates"] = self.automatic_update_install.isChecked()
+        self.auto_update_failed_version = None
         self.store.save()
         if not self.automatic_update_check.isChecked() and self.update_checker:
             self.update_checker.task.cancel.set()
@@ -564,6 +574,8 @@ class Enhancements:
             self.update_notification_label.setText("Kurt Launcher " + self.online_release["version"] + " hazır.")
             self.update_notification.show()
             self.sidebar_updates.setText("↑    Güncelleme var")
+            if self.autostart:
+                QTimer.singleShot(0, self.maybe_auto_update)
         else:
             self.online_release = None
             self.update_notification.hide()
@@ -571,6 +583,9 @@ class Enhancements:
 
     def review_online_update(self):
         if not self.online_release:
+            return
+        if self.store.settings.get("auto_install_updates", True):
+            self.maybe_auto_update(force=True)
             return
         self.open_tools(6)
         info = dict(self.online_release)
@@ -588,12 +603,76 @@ class Enhancements:
 
     def confirm_launcher_update(self, source, info):
         try:
+            if self.store.settings.get("auto_install_updates", True):
+                if not getattr(sys, "frozen", False):
+                    raise LauncherError("Otomatik kurulum paketlenmiş Windows uygulamasında yapılır.")
+                self.run_job("İmzalı güncelleme hazırlanıyor…", lambda task: self.updater.stage(source, task, info), self.auto_update_prepared)
+                return
             self.launcher.ensure_idle()
             if self.server_manager.running: raise LauncherError("Güncellemeden önce sunucuyu durdurun.")
             if not getattr(sys, "frozen", False): raise LauncherError("Kaynak koduyla çalıştırılan uygulamada otomatik değiştirme yapılmaz. Windows EXE paketini kullanın.")
             if QMessageBox.question(self, "Launcher güncellemesi", f"{APP_VERSION} → {info['version']}\nUygulama kapanarak güncellenecek. Oyun verileri korunacak. Devam edilsin mi?") != QMessageBox.Yes: return
             self.run_job("İmzalı güncelleme hazırlanıyor…", lambda task: self.updater.stage(source, task, info), self.apply_launcher_update)
         except LauncherError as exc: self.report(str(exc))
+
+    def automatic_update_failed(self, message):
+        self.auto_update_busy = False
+        self.auto_update_failed_version = self.online_release.get("version") if self.online_release else "local"
+        self.launcher_update_status.setText("Otomatik güncelleme tamamlanamadı. Güncellemeyi incele düğmesiyle yeniden deneyebilirsin.")
+
+    def auto_update_prepared(self, stage):
+        self.auto_update_busy = False
+        self.pending_update_stage = stage
+        self.maybe_auto_update()
+
+    def maybe_auto_update(self, force=False):
+        if force:
+            self.force_auto_update = True
+            self.auto_update_failed_version = None
+        if (not self.store.settings.get("auto_install_updates", True) or not getattr(sys, "frozen", False)
+                or getattr(self, "maintenance_pending", False)):
+            return
+        if self.worker or self.auto_update_busy or QApplication.activeModalWidget() is not None:
+            return
+        if self.server_manager.running or (self.launcher.process and self.launcher.process.poll() is None):
+            if self.online_release or self.pending_update_stage:
+                self.launcher_update_status.setText("Güncelleme hazır; oyun ve sunucu kapandığında otomatik kurulacak.")
+            return
+        if self.pending_update_stage:
+            stage = self.pending_update_stage
+            try:
+                self.apply_launcher_update(stage)
+                self.pending_update_stage = None
+            except (LauncherError, OSError) as exc:
+                self.auto_update_failed_version = self.online_release.get("version") if self.online_release else "local"
+                self.pending_update_stage = None
+                self.report("Otomatik kurulum başlatılamadı: " + str(exc))
+            return
+        if not self.online_release:
+            return
+        info = dict(self.online_release)
+        if self.auto_update_failed_version == info["version"] and not self.force_auto_update:
+            return
+        failure = self.store.root / "updates/last-failure.json"
+        try:
+            previous = json.loads(failure.read_text(encoding="utf-8-sig")) if failure.is_file() else {}
+        except (OSError, ValueError):
+            previous = {}
+        if previous.get("version") == info["version"] and not self.force_auto_update:
+            self.launcher_update_status.setText("Önceki güncelleme açılamadı ve eski sürüm geri yüklendi. Yeniden denemek için Güncellemeyi incele'yi seçebilirsin.")
+            return
+        self.force_auto_update = False
+        self.auto_update_busy = True
+        def prepare(task):
+            package = Path(self.updater.download_release(info, task))
+            try:
+                return self.updater.stage(package, task)
+            finally:
+                package.unlink(missing_ok=True)
+        self.run_job("Yeni launcher sürümü otomatik hazırlanıyor…", prepare, self.auto_update_prepared)
+        if self.worker:
+            self.worker.signals.error.connect(self.automatic_update_failed)
+            self.worker.signals.cancelled.connect(self.automatic_update_failed)
 
     def apply_launcher_update(self, stage):
         self.launcher.ensure_idle()

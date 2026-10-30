@@ -1,9 +1,10 @@
-"""One remembered game archive across launcher versions; never move game files."""
+"""Find legacy archives and the launcher-independent shared game directory."""
 from __future__ import annotations
 
 import json
 import os
 from pathlib import Path
+import stat
 import tempfile
 
 
@@ -27,6 +28,15 @@ def location_file():
     local = os.environ.get("LOCALAPPDATA")
     base = Path(local) if local else Path.home() / "AppData/Local"
     return base / "KurtLauncher/data-location.json"
+
+
+def common_data_folder():
+    folder = location_file().parent / "data"
+    if folder.exists():
+        attributes = getattr(folder.lstat(), "st_file_attributes", 0)
+        if folder.is_symlink() or attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 1024):
+            raise DataLocationError("Ortak oyun klasörü eski bir klasöre bağlantı olamaz.")
+    return folder.resolve()
 
 
 def has_game_data(folder):

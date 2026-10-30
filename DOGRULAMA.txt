@@ -1,3 +1,26 @@
+Kurt Launcher 0.4.5 — ortak oyun arşivi ve otomatik kurulum, 31 Ekim 2026
+
+Yerel doğrulama: 164 uygulama + 9 yayın testi. Windows symlink oluşturma
+yetkisi bulunmadığından yalnız bu symlink senaryosu yerelde atlanır.
+
+Yeni kontroller:
+- Eski launcher klasörü silindikten sonra ortak arşivde dünya/mod/devam.
+- SHA-512 ile tam dosya doğrulama, disk dolması, kopya bozulması, kaynak
+  değişikliği, eksik kaynak ve farklı dolu ortak arşivde veri koruma.
+- Aktif launcher ve Minecraft dünya kilidinde aktarımı durdurma.
+- Özel Java yolunun ortak klasöre uyarlanması ve tamamlanmış aktarımı sürdürme.
+- Tek uygulama konumu, özel verilerin/anahtarların kurulum dışı kalması,
+  eski indirmenin kurulu yeni sürümü düşürememesi.
+- Onaysız otomatik indirme/imza-hazırlık/kurulum akışı; oyun, sunucu,
+  başka işlem ve ortak klasör aktarımını bekleme; kapatma tercihi.
+- Bozuk imza veya başarısız başlangıçta kurmama/geri dönüş ve tekrar döngüsünü önleme.
+- Gerçek PowerShell yardımcısı: başarılı açılıştan sonra eski EXE/geri dönüş
+  kopyası/geçici klasör temizliği, başarısız açılışta geri yükleme,
+  stale sağlık dosyasının kabul edilmemesi, yol taşmasının reddi ve
+  kurulu yeni sürüme yönlendirme (küçük .NET EXE'leriyle).
+
+Önceki doğrulama kaydı:
+------------------------------------------------------------
 Kurt Launcher 0.4.4 — oyun arşivinin sürümler arasında korunması, 31 Ekim 2026
 
 GEÇTİ: 133 uygulama testi + 9 yayın testi (142 toplam).

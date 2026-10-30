@@ -1,6 +1,7 @@
 """Real legacy catalogs and world bytes survive launches from another version folder."""
 import json
 import os
+import shutil
 from pathlib import Path
 import sys
 import tempfile
@@ -21,6 +22,7 @@ class DataPathsTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         self.config = self.root / "LocalAppData/KurtLauncher/data-location.json"
+        self.shared = self.config.parent / "data"
         self.addCleanup(patch.stopall)
         patch("data_paths.location_file", return_value=self.config).start()
         patch.dict(os.environ, {"KURT_DATA_DIR": ""}).start()
@@ -52,7 +54,7 @@ class DataPathsTests(unittest.TestCase):
         base, old, profile = self.legacy()
         self.start_at(base)  # The first updated launch remembers its old data.
         another = self.start_at(self.root / "Elsewhere/KurtLauncher-0.4.4")
-        self.assertEqual(another.root, old.root)
+        self.assertEqual(another.root, self.shared)
         self.assertEqual(another.profiles, old.profiles)
         self.assertEqual(another.settings["last_profile"], profile["id"])
         self.assertEqual(another.settings["offline_username"], "WolfPlayer")
@@ -61,13 +63,17 @@ class DataPathsTests(unittest.TestCase):
         self.assertEqual((another.directory(profile) / "saves/Dunyam/level.dat").read_bytes(), b"original-world-041")
         self.assertEqual((another.mods(profile) / "sodium.jar").read_bytes(), b"original-mod")
         self.assertEqual(another.mod_lock(profile)["sodium"]["version_id"], "old-version")
-        self.assertEqual(another.minecraft, old.minecraft)
+        self.assertTrue((another.minecraft / "versions" / profile["installed"] / (profile["installed"] + ".json")).is_file())
+        shutil.rmtree(base.parent)
+        after_delete = self.start_at(self.root / "Newer/KurtLauncher")
+        self.assertEqual(after_delete.root, self.shared)
+        self.assertEqual((after_delete.directory(profile) / "saves/Dunyam/level.dat").read_bytes(), b"original-world-041")
 
     def test_fresh_zip_finds_one_nearby_old_archive_without_a_previous_registration(self):
         _, old, _ = self.legacy()
         new = self.start_at(self.root / "KurtLauncher-v0.4.4-Windows/KurtLauncher")
-        self.assertEqual(new.root, old.root)
-        self.assertEqual(remembered_data_folder(), old.root)
+        self.assertEqual(new.root, self.shared)
+        self.assertEqual(remembered_data_folder(), self.shared)
 
     def test_an_empty_043_catalog_does_not_hide_the_remembered_041_world(self):
         _, old, _ = self.legacy()
@@ -76,7 +82,7 @@ class DataPathsTests(unittest.TestCase):
         empty = Store(new_base / "data")
         empty.save()
         actual = self.start_at(new_base)
-        self.assertEqual(actual.root, old.root)
+        self.assertEqual(actual.root, self.shared)
         self.assertEqual(len(actual.profiles), 1)
         self.assertEqual(json.loads((empty.root / "profiles.json").read_text()), [])
 
@@ -88,8 +94,8 @@ class DataPathsTests(unittest.TestCase):
         with patch.dict(os.environ, {"KURT_DATA_DIR": str(empty.root)}), \
                 patch.object(core, "__file__", str(new_base / "src/core.py")):
             updated = Store(update_from=empty.root)
-        self.assertEqual(updated.root, old.root)
-        self.assertEqual(remembered_data_folder(), old.root)
+        self.assertEqual(updated.root, self.shared)
+        self.assertEqual(remembered_data_folder(), self.shared)
         self.assertEqual(json.loads((empty.root / "profiles.json").read_text()), [])
 
     def test_old_update_worker_cannot_replace_remembered_world_with_empty_data(self):
@@ -99,16 +105,16 @@ class DataPathsTests(unittest.TestCase):
         empty.save()
         with patch.dict(os.environ, {"KURT_DATA_DIR": str(empty.root)}):
             updated = Store(update_from=empty.root)
-        self.assertEqual(updated.root, old.root)
-        self.assertEqual(remembered_data_folder(), old.root)
+        self.assertEqual(updated.root, self.shared)
+        self.assertEqual(remembered_data_folder(), self.shared)
 
     def test_old_update_worker_preserves_custom_populated_data_directory(self):
         _, old, _ = self.legacy("KurtLauncher-private-games")
         self.legacy("KurtLauncher-other-games")
         with patch.dict(os.environ, {"KURT_DATA_DIR": str(old.root)}):
             updated = Store(update_from=old.root)
-        self.assertEqual(updated.root, old.root)
-        self.assertEqual(remembered_data_folder(), old.root)
+        self.assertEqual(updated.root, self.shared)
+        self.assertEqual(remembered_data_folder(), self.shared)
 
     def test_new_install_uses_one_user_archive_independent_of_exe_folder(self):
         first = self.start_at(self.root / "first")

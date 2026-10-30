@@ -52,10 +52,12 @@ class UiTests(unittest.TestCase):
         with patch("data_paths.location_file", return_value=config), \
                 patch("ui.QFileDialog.getExistingDirectory", return_value=str(old.root.parent)):
             self.window.previous_games.click()
-            self.assertEqual(remembered_data_folder(), old.root)
+            self.wait_job(attempts=1000)
+            self.assertEqual(remembered_data_folder(), (config.parent / "data").resolve())
+            self.assertEqual((config.parent / "data" / world.relative_to(old.root)).read_bytes(), b"old-world")
         self.assertEqual(world.read_bytes(), b"old-world")
         self.assertEqual(self.window.store.root, current)
-        self.assertIn("yeniden açtığında", self.window.status.text())
+        self.assertIn("ortak klasöre", self.window.status.text())
 
     def test_old_game_picker_does_not_switch_archive_while_minecraft_is_running(self):
         from unittest.mock import Mock
@@ -66,6 +68,112 @@ class UiTests(unittest.TestCase):
             dialog.assert_not_called()
         self.assertIn("Önce oyunu", self.window.status.text())
         self.window.launcher.process = None
+
+    def automatic_release(self):
+        next_version = ".".join(APP_VERSION.split(".")[:2] + [str(int(APP_VERSION.split(".")[2]) + 1)])
+        self.window.online_release = {"version": next_version}
+        return next_version
+
+    def test_automatic_update_downloads_stages_and_restarts_without_questions(self):
+        self.automatic_release()
+        package = Path(self.temp.name) / "release.kurtupdate"
+        package.write_bytes(b"test-package")
+        stage = str(Path(self.temp.name) / "updates/verified-test")
+        with patch("sys.frozen", True, create=True), \
+                patch.object(self.window.updater, "download_release", return_value=str(package)) as download, \
+                patch.object(self.window.updater, "stage", return_value=stage) as prepare, \
+                patch.object(self.window, "apply_launcher_update") as apply, \
+                patch("extras_ui.QMessageBox.question") as question:
+            self.window.maybe_auto_update()
+            self.wait_job()
+            download.assert_called_once()
+            prepare.assert_called_once()
+            apply.assert_called_once_with(stage)
+            question.assert_not_called()
+        self.assertFalse(package.exists())
+
+    def test_automatic_update_waits_for_minecraft_to_close(self):
+        from unittest.mock import Mock
+        self.automatic_release()
+        self.window.pending_update_stage = "prepared-stage"
+        self.window.launcher.process = Mock()
+        self.window.launcher.process.poll.return_value = None
+        with patch("sys.frozen", True, create=True), patch.object(self.window, "apply_launcher_update") as apply:
+            self.window.maybe_auto_update()
+            apply.assert_not_called()
+            self.window.launcher.process.poll.return_value = 0
+            self.window.maybe_auto_update()
+            apply.assert_called_once_with("prepared-stage")
+        self.window.launcher.process = None
+
+    def test_automatic_update_waits_for_server_and_other_jobs(self):
+        from unittest.mock import Mock
+        self.window.pending_update_stage = "prepared-stage"
+        self.window.server_manager.process = Mock()
+        self.window.server_manager.process.poll.return_value = None
+        with patch("sys.frozen", True, create=True), patch.object(self.window, "apply_launcher_update") as apply:
+            self.window.maybe_auto_update()
+            apply.assert_not_called()
+            self.window.server_manager.process.poll.return_value = 0
+            self.window.worker = Mock()
+            self.window.maybe_auto_update()
+            apply.assert_not_called()
+            self.window.worker = None
+            self.window.maybe_auto_update()
+            apply.assert_called_once()
+        self.window.server_manager.process = None
+
+    def test_automatic_install_can_be_disabled(self):
+        self.window.automatic_update_install.setChecked(False)
+        self.window.pending_update_stage = "prepared-stage"
+        with patch("sys.frozen", True, create=True), patch.object(self.window, "apply_launcher_update") as apply:
+            self.window.maybe_auto_update()
+            apply.assert_not_called()
+        self.assertFalse(self.window.store.settings["auto_install_updates"])
+
+    def test_failed_startup_is_not_retried_forever_but_user_can_retry(self):
+        version = self.automatic_release()
+        updates = Path(self.temp.name) / "updates"
+        updates.mkdir()
+        (updates / "last-failure.json").write_text('{"version":"' + version + '"}')
+        package = updates / "release.kurtupdate"
+        package.write_bytes(b"retry-package")
+        with patch("sys.frozen", True, create=True), \
+                patch.object(self.window.updater, "download_release", return_value=str(package)) as download, \
+                patch.object(self.window.updater, "stage", return_value="verified-retry"), \
+                patch.object(self.window, "apply_launcher_update") as apply:
+            self.window.maybe_auto_update()
+            download.assert_not_called()
+            self.assertIn("geri yüklendi", self.window.launcher_update_status.text())
+            self.window.maybe_auto_update(force=True)
+            self.wait_job()
+            apply.assert_called_once_with("verified-retry")
+
+    def test_bad_automatic_package_does_not_restart_or_retry_in_a_loop(self):
+        version = self.automatic_release()
+        package = Path(self.temp.name) / "bad.kurtupdate"
+        package.write_bytes(b"bad-package")
+        with patch("sys.frozen", True, create=True), \
+                patch.object(self.window.updater, "download_release", return_value=str(package)) as download, \
+                patch.object(self.window.updater, "stage", side_effect=LauncherError("bad signature")), \
+                patch.object(self.window, "apply_launcher_update") as apply:
+            self.window.maybe_auto_update()
+            self.wait_job()
+            self.window.maybe_auto_update()
+            download.assert_called_once()
+            apply.assert_not_called()
+        self.assertEqual(self.window.auto_update_failed_version, version)
+        self.assertFalse(package.exists())
+
+    def test_automatic_update_waits_for_shared_folder_installation(self):
+        self.window.maintenance_pending = True
+        self.window.pending_update_stage = "prepared-stage"
+        with patch("sys.frozen", True, create=True), patch.object(self.window, "apply_launcher_update") as apply:
+            self.window.maybe_auto_update()
+            apply.assert_not_called()
+            self.window.maintenance_pending = False
+            self.window.maybe_auto_update()
+            apply.assert_called_once()
 
     def test_library_tools_and_backup_actions_are_reachable(self):
         p = self.window.store.create("Test", "1.20.1", "fabric")
@@ -121,6 +229,8 @@ class UiTests(unittest.TestCase):
 
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory()
+        self.appdata_patch = patch.dict(os.environ, {"LOCALAPPDATA": str(Path(self.temp.name) / "LocalAppData")})
+        self.appdata_patch.start()
         self.window=Window(Path(self.temp.name),autostart=False)
         self.window.show()
         app.processEvents()
@@ -129,10 +239,11 @@ class UiTests(unittest.TestCase):
         QThreadPool.globalInstance().waitForDone(10000)
         app.processEvents()
         self.window.close()
+        self.appdata_patch.stop()
         self.temp.cleanup()
 
-    def wait_job(self):
-        for i in range(200):
+    def wait_job(self, attempts=200):
+        for i in range(attempts):
             QTest.qWait(10)
             if self.window.worker is None:
                 break

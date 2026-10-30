@@ -1,18 +1,43 @@
 import os
 import sys
+import time
 from pathlib import Path
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import QLockFile
-from PySide6.QtWidgets import QApplication, QMessageBox, QInputDialog, QFileDialog
-from core import Store
+from PySide6.QtCore import QLockFile, Qt, QTimer
+from PySide6.QtWidgets import QApplication, QMessageBox, QInputDialog, QFileDialog, QProgressDialog
+from core import Store, atomic_json
 from data_paths import (DataLocationError, DataChoiceRequired,
                         remember_data_folder, selected_data_folder)
 from ui import Window
 
 
-def open_store(update_from=None):
+def progress_dialog():
+    dialog = None
+    last = 0
+    def progress(message, value, maximum):
+        nonlocal dialog, last
+        if dialog is None:
+            dialog = QProgressDialog(message, "", 0, 100)
+            dialog.setWindowTitle("Kurt Launcher hazırlanıyor")
+            dialog.setCancelButton(None)
+            dialog.setWindowFlag(Qt.WindowCloseButtonHint, False)
+            dialog.setAutoClose(False)
+            dialog.setMinimumDuration(0)
+        if time.monotonic() - last >= .05 or value >= maximum:
+            dialog.setLabelText(message)
+            dialog.setValue(int(100 * value / maximum) if maximum else 0)
+            dialog.show()
+            QApplication.processEvents()
+            last = time.monotonic()
+    def close():
+        if dialog is not None:
+            dialog.close()
+    return progress, close
+
+
+def open_store(update_from=None, progress=lambda *args: None):
     try:
-        return Store(update_from=update_from)
+        return Store(update_from=update_from, migrate_legacy=update_from is None, migration_progress=progress)
     except DataLocationError as exc:
         if "--smoke-test" in sys.argv:
             raise
@@ -30,6 +55,9 @@ def open_store(update_from=None):
         if not folder:
             return None
         root = selected_data_folder(folder)
+        if update_from is None:
+            from data_migration import ensure_shared_data
+            root = ensure_shared_data(root, progress=progress)
         result = Store(root)
         remember_data_folder(result.root)
         return result
@@ -39,17 +67,32 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("Kurt Launcher")
     app.setOrganizationName("KurtLauncher")
+    app.setQuitOnLastWindowClosed(False)
     try:
         worker_data = None
         if "--update-health" in sys.argv and "--smoke-test" not in sys.argv and os.environ.get("KURT_DATA_DIR"):
             worker_data = Path(os.environ["KURT_DATA_DIR"]).resolve()
-        store = open_store(update_from=worker_data)
+        progress, close_progress = progress_dialog()
+        try:
+            store = open_store(update_from=worker_data, progress=progress)
+        finally:
+            close_progress()
         if store is None:
             return 0
         lock = QLockFile(str(store.root / "launcher.lock"))
         if not lock.tryLock(100):
             QMessageBox.information(None,"Kurt Launcher","Bu veri klasörünü kullanan bir launcher zaten açık.")
             return 0
+        managed = getattr(sys, "frozen", False) and "--smoke-test" not in sys.argv and "--no-self-install" not in sys.argv
+        if managed and worker_data is None:
+            from installation import prepare_managed_install
+            from updater import Updater
+            progress, close_progress = progress_dialog()
+            try:
+                if prepare_managed_install(Updater(store), progress=progress):
+                    return 0
+            finally:
+                close_progress()
         window = Window(store.root, autostart="--smoke-test" not in sys.argv)
         assets = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[1])) / "assets"
         app.setWindowIcon(QIcon(str(assets / "icon.svg")))
@@ -77,6 +120,8 @@ def main():
             QThreadPool.globalInstance().waitForDone()
             return 0
         window.show()
+        app.setQuitOnLastWindowClosed(True)
+        health = None
         if "--update-health" in sys.argv:
             position = sys.argv.index("--update-health")
             if position + 1 < len(sys.argv):
@@ -89,7 +134,49 @@ def main():
                     # launches too, without registering isolated smoke-test data.
                     remember_data_folder(store.root)
                     app.processEvents()
-                    health.write_text("Launcher startup OK", encoding="utf-8")
+                    atomic_json(health, {"status": "Launcher startup OK", "pid": os.getpid(),
+                                         "executable": str(Path(sys.executable).resolve()), "data": str(store.root)})
+        if managed and worker_data is not None and health is not None:
+            from data_paths import common_data_folder
+            from installation import app_folder
+            if store.root != common_data_folder() or Path(sys.executable).resolve().parent != app_folder():
+                window.maintenance_pending = True
+                def finish_install():
+                    # First acknowledge the previous version's update helper, then
+                    # perform a potentially large migration outside its health timeout.
+                    result_path = health.with_suffix(".json.result")
+                    if not result_path.is_file() or window.worker or window.server_manager.running or (window.launcher.process and window.launcher.process.poll() is None):
+                        QTimer.singleShot(1500, finish_install)
+                        return
+                    if not result_path.read_text(encoding="utf-8-sig").strip().startswith("Update OK"):
+                        window.maintenance_pending = False
+                        return
+                    window.setEnabled(False)
+                    progress, close_progress = progress_dialog()
+                    try:
+                        from data_migration import ensure_shared_data
+                        from installation import prepare_managed_install
+                        from updater import Updater
+                        root = ensure_shared_data(store.root, progress=progress, own_launcher_lock=store.root != common_data_folder())
+                        remember_data_folder(root)
+                        destination_store = Store(root)
+                        if prepare_managed_install(Updater(destination_store), progress=progress):
+                            window.relay.stop()
+                            window.close()
+                        elif root != store.root:
+                            import subprocess
+                            subprocess.Popen([sys.executable], creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                            window.close()
+                        else:
+                            window.maintenance_pending = False
+                            window.setEnabled(True)
+                    except Exception as exc:
+                        window.maintenance_pending = False
+                        window.setEnabled(True)
+                        window.report("Ortak klasöre kurulum tamamlanamadı. Eski verilerin korunuyor. " + str(exc))
+                    finally:
+                        close_progress()
+                QTimer.singleShot(1500, finish_install)
         return app.exec()
     except Exception as exc:
         if "--smoke-test" in sys.argv:

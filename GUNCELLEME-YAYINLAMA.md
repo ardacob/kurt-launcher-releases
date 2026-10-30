@@ -33,14 +33,14 @@ Windows ZIP'leri bir gün saklanan geçici Actions artifact'larıdır; kalıcı 
 
 ## Kullanıcının gördüğü akış
 
-0.4.4, oyun arşivi konumunu Windows kullanıcısı için hatırlar. Eski 0.4.1–0.4.3 yardımcısının aktardığı veri konumu da başarılı yeniden başlatmada kaydedilir. Sonraki ZIP başka klasörden açılsa bile aynı kurulu oyunlar, profiller, modlar ve dünyalar görünür. Yeni kurulumlarda kullanıcıya ait ortak oyun klasörü kullanılır. Eski data taşınmaz/birleştirilmez; kullanılan klasör korunmalıdır. Birden fazla eski arşivde seçim istenir; ulaşılamayan eski disk yerine boş kurulum oluşturulmaz.
+0.4.5, arşivi doğrulanmış kopyayla `%LOCALAPPDATA%\KurtLauncher\data` konumuna alır. Aktarım tamamlandığında eski launcher klasörü silinebilir; oyunlar ortak konumda kalır. Launcher `%LOCALAPPDATA%\KurtLauncher\app` içine otomatik kurulur ve masaüstü kısayolu oluşturulur. Eski güncelleme yardımcısının başlangıç kontrolü önce tamamlanır; büyük veri aktarımı ve ortak uygulama kurulumu bundan sonra yapılır. Birden fazla eski arşiv veya farklı bir dolu ortak arşiv varsa veriler birleştirilmez/üzerlerine yazılmaz.
 
 1. Açılışta güncelleme kontrolü oyun/giriş düğmelerini kilitlemeden arka planda yapılır. Güncellemeler sayfasından kapatılabilir.
 2. İmzalı latest.json doğrulanır. Yeni sürüm varsa uygulamada bir bildirim görünür.
-3. Kullanıcı indirmeyi onaylar. Sürüme özel HTTPS adresinden paket indirilir ve SHA-512 doğrulanır.
+3. Varsayılan otomatik kurulum açıkken sürüme özel HTTPS adresinden paket indirilir ve SHA-512 doğrulanır.
 4. Paket içindeki dosya listesinin Ed25519 yayıncı imzası da doğrulanır.
-5. Kullanıcı yeniden başlatmayı onaylar. Minecraft ve yerel sunucu önce kapalı olmalıdır.
-6. Windows yardımcısı uygulama kapanınca dosyaları değiştirir. Yeni EXE başlangıç kontrolünü geçmezse eski uygulama dosyaları geri yüklenir; data korunur.
+5. Minecraft, yerel sunucu ve diğer işlemler bittiğinde uygulama otomatik kapanır ve yeniden açılır. Otomatik kurulum kapatılırsa indirme/kurulum onayı istenir.
+6. Windows yardımcısı uygulama kapanınca dosyaları değiştirir. Yeni EXE başlangıç kontrolünü geçerse eski uygulama ve geçici kopyalar temizlenir. Kontrol geçmezse önceki uygulama geri yüklenir; data korunur ve aynı bozuk sürüm otomatik olarak tekrar tekrar denenmez.
 
 0.4.0'da yayın adresi boş olduğu için 0.4.1'e ilk geçiş ZIP ile yapılır. Sonraki sürümler aynı çevrimiçi kanaldan bulunabilir. Yerel `.kurtupdate` dosyası seçimi de desteklenir.
 

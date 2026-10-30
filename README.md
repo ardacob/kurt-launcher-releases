@@ -1,14 +1,14 @@
-# Kurt Launcher 0.4.4
+# Kurt Launcher 0.4.5
 
 [En yeni Windows sürümünü indir](https://github.com/ardacob/kurt-launcher-releases/releases/latest) · [Tüm sürümler](https://github.com/ardacob/kurt-launcher-releases/releases) · [Otomatik derleme](https://github.com/ardacob/kurt-launcher-releases/actions/workflows/release.yml)
 
-## 0.4.4: oyunların yeni launcher sürümünde de görünsün
+## 0.4.5: ortak oyun klasörü ve tam otomatik güncelleme
 
-Launcher artık oyun veri klasörünü bu Windows kullanıcısı için hatırlar. Yeni sürüm başka bir klasöre çıkarılsa da aynı profiller, kurulu Minecraft sürümleri, modlar, dünyalar, sunucular ve son seçili profil kullanılır. Mevcut `data` klasörü yerinde tutulur; oyunları yeniden indirmek gerekmez.
+Oyunlar, Java, modlar, dünyalar, profiller, ayarlar ve sunucular `%LOCALAPPDATA%\KurtLauncher\data` içinde tutulur. Eski arşiv önce bu klasöre kopyalanır ve bütün dosyaların SHA-512 değerleri doğrulanır; ancak sonra ortak konum kullanılmaya başlanır. Aktarım sırasında yüzde görünür. Eski launcher klasörü silinse de ortak arşiv kalır; oyunları yeniden indirmek gerekmez.
 
-İlk açılışta eski launcher'ın yanındaki veriler kullanılır. Yeni ZIP başka bir klasöre çıkarılmışsa yakınındaki eski Kurt Launcher klasörleri aranır. Tek arşiv bulunursa otomatik seçilir; birden fazla arşiv varsa hangisini kullanacağınız sorulur. Ayarlar → **Eski oyun klasörünü seç…** ile eski launcher klasörü veya içindeki `data` seçilebilir; sonraki açılışta kullanılır. Eksik/eski diskteki veri klasörü yerine sessizce boş bir oyun listesi oluşturulmaz.
+Launcher `%LOCALAPPDATA%\KurtLauncher\app` içine bir kez kurulur ve masaüstüne **Kurt Launcher** kısayolu eklenir. Yeni sürümler açılışta ve uygulama açıkken beş dakikada bir aranır; varsayılan olarak otomatik indirilir, imzası doğrulanır, kurulur ve yeniden açılır. Oyun, sunucu veya başka bir işlem çalışıyorsa bitmesi beklenir. Yeni sürüm açıldıktan sonra eski uygulama kopyası, geri dönüş dosyaları ve geçici kurulum temizlenir. Yeni sürüm açılmazsa eski uygulama geri yüklenir; aynı bozuk sürüm durmadan denenmez. Güncellemeler sayfasından otomatik kurulum kapatılabilir.
 
-Veri konumu `%LOCALAPPDATA%\KurtLauncher\data-location.json` dosyasında yerel olarak tutulur; internete gönderilmez. Tamamen yeni kurulumlar `%LOCALAPPDATA%\KurtLauncher\data` kullanır. Mevcut arşivlerin dosyaları taşınmaz veya birleştirilmez; kullanılan eski `data` klasörünü koruyun. Profilin Minecraft sürümü ve mod yükleyicisi aynı kalır.
+İlk geçişte kayıtlı veya yakındaki eski oyun arşivi bulunur; birden fazla arşiv varsa seçim istenir. **Ayarlar → Eski oyun klasörünü seç…** ile eski launcher veya data klasörü seçilerek doğrulanmış aktarım yapılabilir. Oyun/sunucu dünyası kullanımdaysa aktarım başlamaz. Ortak klasörde farklı bir arşiv varsa dosyalar karıştırılmaz veya üzerlerine yazılmaz. Konum ve aktarım kaydı yalnız bu bilgisayarda tutulur; kullanıcı verileri GitHub'a yüklenmez. Profilin Minecraft sürümü ve mod yükleyicisi korunur.
 
 ## Ücretsiz otomatik yayın
 
@@ -22,7 +22,7 @@ Windows x64 için Türkçe Minecraft **Java Edition** launcher'ı. Siyah ve suns
 
 Sol menüde **Oyun alanı** altında Oyun merkezi, Mod atölyesi, Kütüphane ve Sunucular yer alır. **Uygulama** bölümü alttadır: Güncellemeler, Günlük ve Ayarlar. Oyuncu hesabı ayrı karttadır. Sayfaların işlevleri korunur; güncelleme sayfasının kendi menü seçimi vardır.
 
-Ücretsiz GitHub Releases kanalı `https://github.com/ardacob/kurt-launcher-releases/releases/latest/download/latest.json` adresine bağlanır. Açılışta oyun düğmelerini kilitlemeden arka planda kontrol edilir; yalnız yeni sürüm varsa bildirim gösterilir. İndirme ve yeniden başlatma kullanıcı onayıyla yapılır. Otomatik kontrol, Güncellemeler sayfasından kapatılabilir. İmzalı sürüm bilgisi, paket hash'i ve paket içi yayıncı imzası ayrı ayrı doğrulanır. Her sürümün indirme adresi sabittir; latest.json yalnız en yeni sürümü duyurur.
+Ücretsiz GitHub Releases kanalı `https://github.com/ardacob/kurt-launcher-releases/releases/latest/download/latest.json` adresine bağlanır. Kontrol arka planda yapılır; 0.4.5'ten itibaren doğrulanmış yeni sürüm uygun olduğunda otomatik kurulur ve yeniden açılır. Otomatik kontrol ve kurulum Güncellemeler sayfasından kapatılabilir. İmzalı sürüm bilgisi, paket hash'i ve paket içi yayıncı imzası ayrı ayrı doğrulanır. Her sürümün indirme adresi sabittir; latest.json yalnız en yeni sürümü duyurur.
 
 İlk GitHub yayını yapılmadan kanal "ilk yayını bekliyor" bildirir; bu durum "launcher güncel" diye gösterilmez. Özel anahtar, hesaplar, oyunlar, modlar ve dünyalar yayına alınmaz. 0.4.0'ın yayın adresi boş olduğundan bu sürüme ilk geçiş ZIP ile yapılır; sonraki sürümler aynı kanal üzerinden bulunabilir. Çevrimiçi yayın adımları `GUNCELLEME-YAYINLAMA.md` dosyasındadır.
 
@@ -54,7 +54,7 @@ Sunucu sahibi **Kütüphane → Paket paylaş → Sunucu mod listesi oluştur** 
 
 ## Başlatma
 
-`KurtLauncher.exe` dosyasını açın. Python kurulması gerekmez. Oyunlar ve ayarlar hatırlanan oyun klasöründe saklanır; mevcut kurulumlarda eski `data` klasörü kullanılır. **Ayarlar → Veri klasörü** bu konumu açar.
+`KurtLauncher.exe` dosyasını bir kez açın. Python veya yönetici kurulumu gerekmez. Ortak arşiv doğrulandıktan sonra launcher kullanıcıya ait uygulama klasörüne kurulur; sonraki açılışlarda masaüstündeki **Kurt Launcher** kısayolunu kullanabilirsiniz. **Ayarlar → Veri klasörü** ortak oyun konumunu açar.
 
 1. Oyun merkezinden sürüm kanalı, Minecraft sürümü ve mod yükleyicisi seçin.
 2. **Profil oluştur** ile profilinize bir ad verin.
@@ -76,7 +76,7 @@ Mod atölyesindeki sıralama menüsünde **En çok indirilen**, **En yeni**, **S
 
 Evet. **Sürümleri yenile** yalnızca resmî sürüm listesi önbelleğini günceller. Minecraft dosyaları, modlar, profiller, dünyalar ve sunucular silinmez. Launcher paketini güncellerken yeni dosyaları mevcut launcher klasörüne çıkarın ve **`data` klasörünü silmeyin veya değiştirmeyin**. Paketin içinde `data` yoktur.
 
-0.4.4'ten itibaren paketi başka bir klasöre açmak da hatırlanan oyun arşivini kullanır. İlk geçişte eski klasör otomatik bulunamazsa **Ayarlar → Eski oyun klasörünü seç…** üzerinden seçip launcher'ı yeniden açın. Farklı bir Minecraft sürümü için oluşturulan yeni profilin mod klasörü ayrıdır; uyumlu modlar o profile ayrıca eklenir.
+0.4.5'in ortak klasöre aktarımı tamamlandıktan sonra eski launcher klasörlerini silmek oyunları etkilemez. İlk geçişte eski klasör bulunamazsa **Ayarlar → Eski oyun klasörünü seç…** üzerinden seçip aktarımın tamamlanmasını bekleyin. Farklı bir Minecraft sürümü için oluşturulan yeni profilin mod klasörü ayrıdır; uyumlu modlar o profile ayrıca eklenir.
 
 ## Ücretsiz, port açmadan davetle oynama
 

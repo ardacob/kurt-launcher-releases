@@ -322,6 +322,9 @@ class Window(Enhancements, QMainWindow):
         if autostart:
             QTimer.singleShot(100, self.refresh_versions)
             QTimer.singleShot(2500, self.check_updates_background)
+            self.launcher_update_timer = QTimer(self)
+            self.launcher_update_timer.timeout.connect(self.check_updates_background)
+            self.launcher_update_timer.start(5 * 60 * 1000)
 
     @property
     def profile(self):
@@ -603,7 +606,7 @@ class Window(Enhancements, QMainWindow):
         row.addWidget(button("Veri klasörü ↗",lambda:self.open_path(self.store.root)))
         layout.addLayout(row)
         layout.addWidget(label("Veriler: " + str(self.store.root),"muted",True))
-        layout.addWidget(label("Launcher güncellendiğinde veya başka bir klasörden açıldığında aynı oyunlar, modlar ve dünyalar kullanılır.","muted",True))
+        layout.addWidget(label("Oyunlar, modlar ve dünyalar launcher'dan bağımsız ortak klasörde tutulur. Eski launcher klasörünü kaldırmak oyunlarını silmez.","muted",True))
         layout.addWidget(label("Kurt Launcher bağımsız bir projedir. Mojang veya Microsoft ile bağlantılı değildir.","muted",True))
         layout.addStretch()
 
@@ -1482,11 +1485,22 @@ class Window(Enhancements, QMainWindow):
             return
         try:
             selected = selected_data_folder(folder)
-            # Validate the old catalog before remembering it. No files are copied,
-            # merged, removed, or upgraded to another Minecraft version.
             Store(selected)
-            remember_data_folder(selected)
-            self.report("Eski oyun klasörü kaydedildi. Launcher'ı kapatıp yeniden açtığında profillerin, modların ve dünyaların görünecek.")
+            def migrate(task):
+                from data_migration import ensure_shared_data
+                def progress(message, value, maximum):
+                    task.check()
+                    if task.message != message:
+                        task.status(message)
+                    if task.maximum != maximum:
+                        task.set_max(maximum)
+                    task.progress(value)
+                root = ensure_shared_data(selected, progress=progress)
+                Store(root)
+                remember_data_folder(root)
+                return root
+            self.run_job("Eski oyunlar ortak klasöre aktarılıyor…", migrate,
+                         lambda root: self.report("Oyunların ortak klasöre kopyalanıp doğrulandı. Launcher'ı yeniden açtığında bu arşiv kullanılacak; eski launcher klasörünü silebilirsin."))
         except (DataLocationError, LauncherError, OSError) as exc:
             self.report(str(exc))
 
@@ -1563,6 +1577,7 @@ class Window(Enhancements, QMainWindow):
             if process.returncode != 0 and not self.worker:
                 failed_profile = next((p for p in self.store.profiles if p["id"] == self.launcher.active_profile_id), None)
                 QTimer.singleShot(0, lambda: self.show_diagnosis(False, failed_profile))
+        self.maybe_auto_update()
 
     def closeEvent(self,event):
         if self.worker:
