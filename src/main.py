@@ -79,8 +79,12 @@ def main():
             close_progress()
         if store is None:
             return 0
+        from deep_links import argument_link, forward, listen, register_protocol
+        pending_invite = argument_link(sys.argv)
         lock = QLockFile(str(store.root / "launcher.lock"))
         if not lock.tryLock(100):
+            if pending_invite and forward(store.root, pending_invite):
+                return 0
             QMessageBox.information(None,"Kurt Launcher","Bu veri klasörünü kullanan bir launcher zaten açık.")
             return 0
         managed = getattr(sys, "frozen", False) and "--smoke-test" not in sys.argv and "--no-self-install" not in sys.argv
@@ -94,6 +98,13 @@ def main():
             finally:
                 close_progress()
         window = Window(store.root, autostart="--smoke-test" not in sys.argv)
+        if '--smoke-test' not in sys.argv:
+            listen(window)
+            if managed:
+                from installation import app_folder
+                if Path(sys.executable).resolve().parent == app_folder():
+                    try: register_protocol(sys.executable)
+                    except (OSError, ValueError) as exc: window.log('Davet bağlantısı kaydı: '+str(exc))
         assets = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[1])) / "assets"
         app.setWindowIcon(QIcon(str(assets / "icon.svg")))
         if "--smoke-test" in sys.argv:
@@ -105,6 +116,8 @@ def main():
             import subprocess
             assert WinVaultKeyring
             assert window.tools_tabs.count() == 8
+            assert window.management_tabs.count() == 6
+            assert window.property('visual_theme') in ('light','sunset','contrast')
             from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
             assert Ed25519PublicKey.from_public_bytes(window.updater.public_key)
             helper = assets / "playit/playitd.exe"
@@ -115,11 +128,13 @@ def main():
             window.show()
             app.processEvents()
             window.grab().save(str(store.root / "smoke-test.png"))
-            (store.root / "smoke-test.ok").write_text("Qt + 8 tool tabs + content/worlds/management + Ed25519 + Minecraft + Windows vault + signed Playit helper SHA256/--help OK",encoding="utf-8")
+            (store.root / "smoke-test.ok").write_text("Qt + 8 tool tabs + 6 management tabs + modern theme/localization + journeys/world-history + Ed25519 + Minecraft + Windows vault + signed Playit helper SHA256/--help OK",encoding="utf-8")
             window.close()
             QThreadPool.globalInstance().waitForDone()
             return 0
         window.show()
+        if pending_invite:
+            QTimer.singleShot(500, lambda: window.receive_invite_link(pending_invite))
         app.setQuitOnLastWindowClosed(True)
         health = None
         if "--update-health" in sys.argv:

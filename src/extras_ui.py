@@ -447,7 +447,18 @@ class Enhancements:
 
     def build_appearance_tools(self):
         box = self.tools_tab("Görünüm")
-        box.addWidget(text("Siyah zemin korunur; vurgu rengini ve mod listesi yoğunluğunu seçebilirsin."))
+        box.addWidget(text("Açık, sunset, sistem veya yüksek kontrast görünümünü seç. Yazı ve kontrolleri birlikte ölçekle."))
+        self.theme_choice=QComboBox()
+        for title,value in (('Açık · Gün doğumu','light'),('Koyu · Sunset','sunset'),('Sistem teması','system'),('Yüksek kontrast','contrast')):
+            self.theme_choice.addItem(title,value)
+        self.theme_choice.setCurrentIndex(max(0,self.theme_choice.findData(self.store.settings.get('theme','light'))))
+        box.addWidget(self.theme_choice)
+        self.language_choice=QComboBox();self.language_choice.addItem('Türkçe','tr');self.language_choice.addItem('English','en')
+        self.language_choice.setCurrentIndex(max(0,self.language_choice.findData(self.store.settings.get('language','tr'))));box.addWidget(self.language_choice)
+        self.interface_scale=QSpinBox();self.interface_scale.setRange(90,140);self.interface_scale.setSingleStep(10);self.interface_scale.setSuffix(' %')
+        self.interface_scale.setValue(int(self.store.settings.get('ui_scale',100)));box.addWidget(text('Arayüz ölçeği'));box.addWidget(self.interface_scale)
+        self.tools_button('Görünümü ve dili uygula',self.save_interface,box)
+        box.addWidget(text('Kısayollar: Ctrl+1 Oyun merkezi · Ctrl+2 Modlar · Ctrl+3 Dünyalar · Ctrl+, Ayarlar · F6 Profil seç · Ctrl+Enter Oyna. Tab ile kontroller arasında ilerle.'))
         row = QHBoxLayout()
         self.tools_button("Sunset vurgu rengini seç", self.pick_accent, row)
         self.tools_button("Varsayılan sunset", self.reset_accent, row)
@@ -476,11 +487,13 @@ class Enhancements:
         self.apply_appearance()
 
     def apply_appearance(self):
-        from ui import STYLE
-        accent = self.store.settings.get("accent", "#ffb875")
-        if not QColor(accent).isValid(): accent = "#ffb875"
-        override = f"QPushButton#primary {{ background: {accent}; color: #20131c; }}" if self.store.settings.get("accent") else ""
-        self.setStyleSheet(STYLE + override + f"\nQLabel#compatible {{ color: {accent}; }} QTabWidget::pane {{ border: 1px solid #493044; }} QTabBar::tab {{ background: #281b29; padding: 10px; }} QTabBar::tab:selected {{ color: {accent}; background: #43283b; }}")
+        from appearance import apply
+        apply(self)
+        if hasattr(self,'localization'):self.localization.refresh()
+
+    def save_interface(self):
+        self.store.settings.update(theme=self.theme_choice.currentData(),language=self.language_choice.currentData(),ui_scale=self.interface_scale.value())
+        self.store.save();self.apply_appearance()
 
     def save_compact(self):
         self.store.settings["compact_mods"] = self.compact_mods.isChecked()

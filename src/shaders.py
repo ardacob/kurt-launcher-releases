@@ -71,13 +71,16 @@ class ShaderManager:
                 and bool(set(version.get('loaders', [])) & set(ENGINES))
                 and (not engine or engine in version.get('loaders', [])))
 
-    def search(self, profile, query='', offset=0, sort='downloads', engine=''):
+    def search(self, profile, query='', offset=0, sort='downloads', engine='', performance=''):
         if profile.get('kind') == 'server':
             raise LauncherError("Shaderpack aramak için oyuncu profili seçin.")
         if sort not in ('downloads', 'relevance', 'newest', 'updated') or engine not in ('', *ENGINES):
             raise LauncherError("Geçersiz shaderpack filtresi.")
         facets = [['project_type:shader'], ['versions:' + profile['version']],
                   ['categories:' + engine] if engine else ['categories:iris', 'categories:optifine']]
+        if performance:
+            if performance not in ('low','medium','high'): raise LauncherError('Geçersiz shader performans sınıfı.')
+            facets.append(['categories:low','categories:potato'] if performance=='low' else ['categories:'+performance])
         return self.api.get(MODRINTH + '/search', query=query, facets=json.dumps(facets),
                             index=sort, limit=20, offset=max(0, int(offset)))
 
@@ -91,7 +94,7 @@ class ShaderManager:
             raise LauncherError(f"Minecraft {profile['version']} için uyumlu Iris/OptiFine shaderpack sürümü yok.")
         return max(choices, key=lambda v: (v.get('version_type') == 'release', v.get('date_published', '')))
 
-    def catalog(self, profile, query='', offset=0, task=None, sort='downloads', engine='', favorites=False):
+    def catalog(self, profile, query='', offset=0, task=None, sort='downloads', engine='', favorites=False, performance=''):
         task = task or Task()
         task.status(self.title + ' kataloğu aranıyor…')
         if favorites:
@@ -99,7 +102,7 @@ class ShaderManager:
             hits.sort(key=lambda v:int(v.get('downloads') or 0), reverse=True)
             result = {'hits':hits[offset:offset+20], 'total_hits':len(hits)}
         else:
-            result = self.search(profile, query, offset, sort, engine)
+            result = self.search(profile, query, offset, sort, engine, **({'performance':performance} if performance else {}))
         def enrich(hit):
             api = Api()
             paths = {'icon_path': None, 'preview_path': None}

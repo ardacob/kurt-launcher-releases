@@ -36,7 +36,8 @@ class Management:
         row.addWidget(self.action(button('Seçili yedeği geri yükle',self.restore_world)));layout.addLayout(row);layout.addStretch()
         self.world_rows=[]
         box=self.tools_tab('Yönetim')
-        tabs=QTabWidget();box.addWidget(tabs)
+        tabs=QTabWidget();self.management_tabs=tabs;box.addWidget(tabs)
+        tabs.setUsesScrollButtons(True)
         body=QWidget();profile_box=QVBoxLayout(body);tabs.addTab(body,'Profil kopyala')
         profile_box.addWidget(label('Aktif profilin modları, shader/doku paketleri ve ayarları doğrulanarak yeni profile kopyalanır. Minecraft ve Java indirmeleri ortak kullanılmaya devam eder.','muted',True))
         self.clone_name=self.action(QLineEdit());self.clone_name.setPlaceholderText('Yeni profil adı');profile_box.addWidget(self.clone_name)

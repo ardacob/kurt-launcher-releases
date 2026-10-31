@@ -23,6 +23,7 @@ from extras_ui import Enhancements
 from shader_ui import ShaderWorkshop
 from workshop_ui import ContentWorkshops
 from management_ui import Management
+from journeys_ui import Journeys
 from data_paths import DataLocationError, remember_data_folder, selected_data_folder
 
 CATEGORY_NAMES = {
@@ -174,17 +175,19 @@ class Landscape(QWidget):
     """Original, code-drawn voxel landscape; no remote artwork needed."""
     def __init__(self):
         super().__init__()
-        self.setMinimumHeight(254)
+        self.setMinimumHeight(220)
+        self.setMaximumHeight(240)
 
     def paintEvent(self, event):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         w, h = self.width(), self.height()
-        p.setClipRect(self.rect())
+        clip=QPainterPath();clip.addRoundedRect(QRectF(self.rect()),18,18);p.setClipPath(clip)
+        light=self.window().property('visual_theme')=='light'
         gradient = QLinearGradient(0, 0, w * .25, h)
-        gradient.setColorAt(0, QColor("#21122f"))
-        gradient.setColorAt(.46, QColor("#a04b72"))
-        gradient.setColorAt(1, QColor("#f79e70"))
+        gradient.setColorAt(0, QColor('#f6e9df' if light else '#211e35'))
+        gradient.setColorAt(.46, QColor('#f8caa6' if light else '#a04b72'))
+        gradient.setColorAt(1, QColor('#ffe7be' if light else '#f79e70'))
         p.fillRect(self.rect(), gradient)
         p.setPen(Qt.NoPen)
         p.fillRect(QRectF(w * .80 - 7, 44, 76, 76), QColor(255, 173, 122, 38))
@@ -211,19 +214,20 @@ class Landscape(QWidget):
             p.fillRect(QRectF(x-17*scale,y-13*scale,44*scale,29*scale),QColor("#251a32"))
             p.fillRect(QRectF(x-9*scale,y-29*scale,28*scale,28*scale),QColor("#3b2547"))
         shade = QLinearGradient(0, 0, w*.74, 0)
-        shade.setColorAt(0, QColor(14,9,18,250))
-        shade.setColorAt(.62, QColor(14,9,18,218))
-        shade.setColorAt(1, QColor(14,9,18,0))
+        shade.setColorAt(0, QColor(250,244,237,250) if light else QColor(14,15,24,250))
+        shade.setColorAt(.62, QColor(250,244,237,218) if light else QColor(14,15,24,218))
+        shade.setColorAt(1, QColor(250,244,237,0) if light else QColor(14,15,24,0))
         p.fillRect(self.rect(), shade)
-        p.setPen(QColor("#ffb078"))
+        p.setPen(QColor('#99432e' if light else '#ffb078'))
         p.setFont(QFont("Segoe UI", 9, QFont.Bold))
-        p.drawText(28, 35, "SENİN OYUNUN. SENİN DÜNYAN.")
-        p.setPen(QColor("#fff0ec"))
-        p.setFont(QFont("Segoe UI", 27, QFont.Bold))
-        p.drawText(QRectF(26,54,w*.63,110), Qt.AlignLeft, "Bir sonraki dünyan\nburada başlıyor.")
-        p.setPen(QColor("#e3becb"))
+        english=getattr(self.window(),'store',None) and self.window().store.settings.get('language')=='en'
+        p.drawText(28, 35, 'YOUR GAME. YOUR WORLD.' if english else 'SENİN OYUNUN. SENİN DÜNYAN.')
+        p.setPen(QColor('#28354a' if light else '#fff0ec'))
+        p.setFont(QFont('Segoe UI',23,QFont.Bold))
+        p.drawText(QRectF(26,54,w*.66,100), Qt.AlignLeft, 'One world.\nEndless possibilities.' if english else 'Bir dünya.\nBinlerce olasılık.')
+        p.setPen(QColor('#5f5661' if light else '#e3becb'))
         p.setFont(QFont("Segoe UI", 11))
-        p.drawText(28, h-36, "Sürümünü seç. Modlarını ekle. Kendi maceranı kur.")
+        p.drawText(QRectF(28,h-48,w*.74,42),Qt.AlignLeft|Qt.TextWordWrap,'Pick a version. Add your mods. Make it yours.' if english else 'Sürümünü seç. Modlarını ekle. Kendi maceranı kur.')
 
 
 class Signals(QObject):
@@ -262,7 +266,7 @@ class Worker(QRunnable):
             self.signals.error.emit(messages.get(name, f"İşlem tamamlanamadı ({name}). Bağlantıyı, dosya izinlerini ve ayarları kontrol edin."))
 
 
-class Window(Management, ContentWorkshops, ShaderWorkshop, Enhancements, QMainWindow):
+class Window(Journeys, Management, ContentWorkshops, ShaderWorkshop, Enhancements, QMainWindow):
     def __init__(self, data_root=None, autostart=True):
         super().__init__()
         self.store = Store(data_root)
@@ -315,6 +319,10 @@ class Window(Management, ContentWorkshops, ShaderWorkshop, Enhancements, QMainWi
         self.build_shaders()
         self.build_content_workshops()
         self.build_management()
+        self.build_journeys()
+        from localization import Localization
+        self.localization = Localization(self)
+        self.install_keyboard_shortcuts()
         self.reload_profiles()
         self.refresh_account()
         self.reload_servers()
@@ -363,7 +371,7 @@ class Window(Management, ContentWorkshops, ShaderWorkshop, Enhancements, QMainWi
         self.main_navigation.setSpacing(3)
         self.main_navigation.setContentsMargins(0,0,0,0)
         for index in (0, 1, 7, 6, 8, 9, 5, 4):
-            self.nav[index].setStyleSheet('padding: 6px 10px; font-size: 12px;')
+            self.nav[index].setStyleSheet('padding: 7px 10px;')
             self.main_navigation.addWidget(self.nav[index])
         navigation_body = QWidget()
         navigation_body.setLayout(self.main_navigation)
@@ -971,6 +979,9 @@ class Window(Management, ContentWorkshops, ShaderWorkshop, Enhancements, QMainWi
     def join_invitation(self):
         try:
             code = self.invite_input.text().strip()
+            if code.lower().startswith('kurt:'):
+                from deep_links import link_code
+                code=link_code(code)
             info = decode_invite(code)
             if self.store.settings["login_mode"] == "offline":
                 offline_account(self.username.text())
@@ -1642,6 +1653,7 @@ class Window(Management, ContentWorkshops, ShaderWorkshop, Enhancements, QMainWi
     def check_game(self):
         self.check_servers()
         process=self.launcher.process
+        self.launcher.sessions.update(process)
         if process and process.poll() is None:
             self.game_active=True
         elif process and self.game_active:
@@ -1662,6 +1674,7 @@ class Window(Management, ContentWorkshops, ShaderWorkshop, Enhancements, QMainWi
                 self.stop_server()
             event.ignore()
         else:
+            self.launcher.sessions.update(self.launcher.process, closing=True)
             if getattr(self, "update_checker", None):
                 self.update_checker.task.cancel.set()
             self.relay.stop()

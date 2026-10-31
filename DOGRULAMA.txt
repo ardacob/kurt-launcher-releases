@@ -1,3 +1,28 @@
+Kurt Launcher 0.6.0 — modern tema ve sekiz yeni oyun aracı, 31 Ekim 2026
+
+248 uygulama + 9 yayın testi. Yerelde yalnız symlink oluşturma yetkisi
+olmayan senaryo atlanır. Windows dünya kilidi, gerçek yerel TCP ve farklı
+süreçler arasında QLocalServer davet aktarımı çalıştırılır.
+
+Yeni doğrulamalar:
+- Dünya geçmişi değişmeyen dosyaları tekrar saklamaz. Değişen/silinen
+  dosyalar tarihe döner; geri yükleme öncesi dünya ZIP'i korunur.
+- Bozuk nesne/hash, yol aşımı, iptal ve çalışan oyun dünyayı değiştiremez.
+- Prism/MultiMC ve resmi .minecraft sürüm/yükleyici tespiti; kaynak SHA-512
+  aynı kalır. Hesaplar kopyalanmaz; dünyalar isteğe bağlıdır.
+- Gerçek yerel Java status/ping sunucusu parçalı TCP yanıtlarıyla sorgulanır;
+  büyük paket reddedilir; favoriler profil kimliğiyle saklanır.
+- kurt:// bağlantısı doğrulanır. İkinci süreç açık uygulamaya daveti iletir.
+- Davet önizlemesinde Hayır oyunu başlatmaz. Quick Play doğru dünya
+  parametresini kullanır; farklı/desteksiz sürüm oyunu başlatmaz.
+- Oturum süreleri monoton saatle ölçülür ve yeniden açılışta korunur.
+- Tema/dil/ölçek canlı değişir; profil adları korunur; klavye yolları çalışır.
+- Gerçek Windows penceresinde açık ana ekran ve koyu görünüm kontrolü.
+
+Paket CI üzerinde EXE başlangıcı, Ed25519 ve yerinde yeniden açılışla ayrıca
+kontrol edilir. Kullanıcı arşivi ve özel imzalama anahtarı yayımlanmaz.
+
+Önceki sürüm doğrulama kaydı:
 Kurt Launcher 0.5.0 — sekiz içerik/yönetim özelliği, 31 Ekim 2026
 
 224 uygulama + 9 yayın testi. Yerel symlink oluşturma izni olmayan tek
@@ -211,3 +236,4 @@ TAMAMLANMASI DIŞ HESAP/ORTAM GEREKTİREN DOĞRULAMALAR
 Önceki 0.3.x gerçek Minecraft 1.20.1 / Fabric / Java 17 kurulumları ve
 Playit yerel IPC denemeleri geçmiş doğrulamalardır; 0.4.0'da gerçek oyun
 başlatma veya gerçek internet tüneli denenmiş gibi değerlendirilmemelidir.
+

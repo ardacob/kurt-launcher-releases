@@ -23,7 +23,7 @@ import requests
 import minecraft_launcher_lib as mc
 from data_paths import resolve_data_folder, remember_data_folder
 
-APP_VERSION = "0.5.0"
+APP_VERSION = "0.6.0"
 MANIFEST = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 MODRINTH = "https://api.modrinth.com/v2"
 LOADERS = ("vanilla", "fabric", "forge", "neoforge", "quilt")
@@ -719,6 +719,12 @@ class Launcher:
         self.copies = ProfileCopies(self)
         self.diagnostics = ModDiagnostics(self)
         self.storage = Storage(self)
+        from journeys import Sessions, FavoriteServers, ExternalImports
+        from world_history import WorldHistory
+        self.sessions = Sessions(store)
+        self.favorites = FavoriteServers(store)
+        self.external_imports = ExternalImports(self)
+        self.world_history = WorldHistory(self)
 
     def ensure_profile_idle(self, profile):
         if profile.get("kind") != "server":
@@ -790,9 +796,19 @@ class Launcher:
         self.store.save()
         return f"{profile['name']} hazır."
 
-    def play(self, profile, task, join_address=None):
+    def play(self, profile, task, join_address=None, world_name=None):
         if self.process and self.process.poll() is None:
             raise LauncherError("Minecraft zaten çalışıyor.")
+        if join_address and world_name:
+            raise LauncherError('Dünya ve sunucu aynı anda açılamaz.')
+        if world_name:
+            from worlds import level_metadata
+            from profile_data import session_locks
+            world = self.worlds.world(profile, world_name)
+            with session_locks(world): pass
+            meta = level_metadata(world / 'level.dat')
+            if meta.get('version') != profile['version']:
+                raise LauncherError('Hızlı devam için dünya ve profil Minecraft sürümleri aynı olmalı. Dünyayı normal Oyna ile veya kopya profilde açın.')
         self.mods.validate_enabled(profile)
         mode = self.store.settings.get("login_mode", "microsoft")
         if mode == "offline":
@@ -821,12 +837,20 @@ class Launcher:
                    "launcherName": "KurtLauncher", "launcherVersion": APP_VERSION,
                    "jvmArguments": [f"-Xmx{int(self.store.settings.get('ram', 4096))}M", "-Xms512M"],
                    "enableLoggingConfig": True}
+        if world_name:
+            vanilla_json = read_json(self.store.minecraft / 'versions' / profile['version'] / (profile['version']+'.json'), {})
+            if 'quickPlaySingleplayer' not in json.dumps(vanilla_json.get('arguments', {})):
+                raise LauncherError('Bu Minecraft sürümü dünyaya hızlı devam etmeyi desteklemiyor. Normal Oyna düğmesini kullanın.')
+            if self.store.settings.get('world_history_auto', True):
+                self.world_history.create(profile, world_name, task, automatic=True)
+            options['quickPlaySingleplayer'] = world_name
+            options['quickPlayPath'] = str(game / 'quickplay.json')
         if join_address:
-            from invites import split_endpoint
-            host, port = split_endpoint(join_address)
+            from journeys import server_endpoint
+            host, port = server_endpoint(join_address)
             vanilla_json = read_json(self.store.minecraft / "versions" / profile["version"] / (profile["version"] + ".json"), {})
             if "quickPlayMultiplayer" in json.dumps(vanilla_json.get("arguments", {})):
-                options["quickPlayMultiplayer"] = f"{host}:{port}"
+                options["quickPlayMultiplayer"] = f"[{host}]:{port}" if ':' in host else f"{host}:{port}"
                 options["quickPlayPath"] = str(game / "quickplay.json")
             else:
                 options.update(server=host, port=str(port))
@@ -843,6 +867,7 @@ class Launcher:
         self.active_profile_id = profile["id"]
         profile["last_played"] = time.time()
         self.store.save()
+        self.sessions.start(profile)
         return "Minecraft başlatıldı: " + account["name"] + (" (kullanıcı adıyla)." if mode == "offline" else ".")
 
     def join_invite(self, code, task):

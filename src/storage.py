@@ -29,7 +29,7 @@ class Storage:
             elif name.startswith('minecraft/versions/'): group = 'Minecraft sürümleri'
             elif name.startswith('minecraft/runtime/'): group = 'Java'
             elif name.startswith(('minecraft/libraries/', 'minecraft/assets/')): group = 'Oyun kütüphaneleri ve varlıklar'
-            elif parts[0] in ('backups', 'world-backups'): group = 'Yedekler'
+            elif parts[0] in ('backups', 'world-backups', 'world-history'): group = 'Yedekler'
             elif parts[0] == 'cache': group = 'Önbellek'
             else: group = 'Diğer'
             info = path.stat()

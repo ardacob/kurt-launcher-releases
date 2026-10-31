@@ -1,6 +1,20 @@
-# Kurt Launcher 0.5.0
+# Kurt Launcher 0.6.0
 
 [En yeni Windows sürümünü indir](https://github.com/ardacob/kurt-launcher-releases/releases/latest) · [Tüm sürümler](https://github.com/ardacob/kurt-launcher-releases/releases) · [Otomatik derleme](https://github.com/ardacob/kurt-launcher-releases/actions/workflows/release.yml)
+
+## 0.6.0: modern görünüm ve hızlı oyun
+
+- **Gün doğumu / Sunset / Sistem / Yüksek kontrast:** Açık modern arayüz varsayılandır. Kütüphane → Görünüm bölümünden tema, Türkçe/İngilizce ve %90–140 ölçek anında uygulanır. Profil adları, yollar ve yapımcı açıklamaları korunur.
+- **Son dünyama devam et:** Aktif profilin son dünyası veya Dünyalarım'da seçili dünya Quick Play ile açılır. Minecraft Java 1.20+ desteği ve dünya/profil sürümü eşleşmesi gerekir. Dünya verisi dönüştürülmez.
+- **Favori sunucular:** Adres, özel port ve profili kaydet; gerçek ping, sürüm ve oyuncu bilgisi sorgula, tek tıkla katıl. DNS SRV port keşfi yapılmaz.
+- **Dışarıdan aktar:** Resmî `.minecraft` veya Prism/MultiMC klasörünü tara; oyun/yükleyiciyi incele veya düzelt. Modları, ayarları, paketleri ve isteğe bağlı dünyaları ayrı profile doğrulanmış kopyayla al. Kaynak korunur; hesaplar ve özel başlatma komutları aktarılmaz. İlk Oyna oyun/Java dosyalarını ortak arşive hazırlar.
+- **Davet bağlantıları:** Sunucular → Davet bağlantısını kopyala ile `kurt://join/...`. Kurulu Windows uygulaması bağlantıyı mevcut pencereye aktarır; adres/sürüm önizlemesi ve varsa mod karşılaştırmasından sonra kullanıcı katılır. Çok uzun davetlerde kod veya mod listesi dosyası kullanılır.
+- **Shader önerisi:** Yerel ekran kartı adı/RAM üzerinden başlangıç sınıfı; gerçek Modrinth performans etiketleriyle uyumlu sürüm araması. FPS/VRAM ölçümü değildir; sonuçlar yapımcı etiketlerine bağlıdır.
+- **Dünya geçmişi:** Dünyalarım → Dünya geçmişi üzerinden yerel geri dönüş noktaları. Değişmeyen dosyalar SHA-512 ile ortak saklanır. Hızlı devam öncesi otomatik nokta varsayılan açıktır, bu pencereden kapatılabilir. Geri yükleme önce mevcut hali ZIP olarak korur. Geçmiş otomatik silinmez ve Depolama'da Yedekler altında sayılır. Çok büyük dosya listelerinde ZIP yedeği kullanılmalıdır.
+- **Yerel oyun istatistikleri:** Yeni oturumların profil bazında toplam süresi ve son 100 oturum görünümü. Launcher açıkken ölçülür, menü süresi dahildir; geçmiş süreler tahmin edilmez.
+- **Klavye:** Ctrl+1 ana ekran, Ctrl+2 modlar, Ctrl+3 dünyalar, Ctrl+, ayarlar, F6 profil seçimi, Ctrl+Enter Oyna; Tab ile dolaşma.
+
+Favori sunucular, dışarıdan aktarım ve istatistikler **Kütüphane → Yönetim** içindedir. Ana ekranda kısayollar vardır. Ücretli hizmet veya yeni hesap gerekmez. [0.6.0 sürüm notları](https://github.com/ardacob/kurt-launcher-releases/releases/tag/v0.6.0).
 
 ## 0.5.0: içerik, dünya ve profil yönetimi
 
@@ -205,3 +219,4 @@ Testler:
 Microsoft uygulama kaydı/API izni sağlanmadığından gerçek Microsoft oturumu; kullanıcı adına Playit hesabı bağlanmadığından gerçek herkese açık tünel ve iki farklı ağdan oyun bağlantısı bu sürümde doğrulanmadı. Minecraft EULA onayı kullanıcıya bırakıldı. Tünel/kota API senaryoları taklit servisle test edildi. Bütün eski Minecraft sürümleri veya tüm mod kombinasyonları tek tek denenmedi.
 
 Bağımsız projedir; Mojang/Microsoft ile bağlantısı veya resmî onayı yoktur. Minecraft varlıkları ve modlar dağıtım paketine dahil edilmez; ilgili kaynaklardan indirilir. Kullanılan açık kaynak bileşenlerinin lisansları `third-party` klasöründedir. Qt/PySide DLL'leri dinamik olarak yüklenir; kaynak kodu ve yeniden derleme betiği pakete dahildir.
+

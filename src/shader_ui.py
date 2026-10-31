@@ -184,12 +184,13 @@ class ShaderWorkshop:
             p = self.require_profile()
             query, sort, engine = self.shader_search_input.text().strip(), self.shader_sort.currentData(), self.shader_engine.currentData()
             favorites = self.shader_favorites_button.isChecked()
-            state = (p['id'], query, sort, engine, favorites)
+            performance = self.shader_tier.currentData() if hasattr(self,'shader_tier') else ''
+            state = (p['id'], query, sort, engine, favorites, performance)
             if state != self.shader_query_state:
                 offset = 0
             self.shader_query_state = state
             self.run_job('Shaderpack’ler aranıyor…',
-                lambda task: self.launcher.shaders.catalog(p, query, offset, task, sort=sort, engine=engine, **({'favorites':True} if favorites else {})),
+                lambda task: self.launcher.shaders.catalog(p, query, offset, task, sort=sort, engine=engine, **({'favorites':True} if favorites else {}), **({'performance':performance} if performance and not favorites else {})),
                 lambda result: self.show_shader_results(result, offset))
         except LauncherError as exc:
             self.report(str(exc))
