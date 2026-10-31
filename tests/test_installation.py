@@ -51,6 +51,14 @@ class InstallationTests(unittest.TestCase):
             self.assertFalse(installation.prepare_managed_install(self.updater))
             launch.assert_not_called()
 
+    def test_setup_receives_the_actual_worker_result_path(self):
+        result = self.store.root / "updates/installer.json.result"
+        receipt = self.source / "setup-receipt.txt"
+        with patch("sys.frozen", True, create=True), patch("sys.executable", str(self.exe)), \
+                patch.object(self.updater, "launch_helper", return_value=result):
+            self.assertTrue(installation.prepare_managed_install(self.updater, setup_receipt=receipt))
+        self.assertEqual(receipt.read_bytes().decode("utf-16-le"), str(result) + "\r\n")
+
     def test_old_download_cannot_downgrade_a_newer_managed_installation(self):
         managed = installation.app_folder() / "KurtLauncher.exe"
         managed.parent.mkdir(parents=True)

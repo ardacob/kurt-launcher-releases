@@ -31,7 +31,7 @@ def installed_state():
     return None
 
 
-def prepare_managed_install(updater, *, progress=lambda *args: None):
+def prepare_managed_install(updater, *, progress=lambda *args: None, setup_receipt=None):
     """Return False if already installed; otherwise start a helper and let this process exit."""
     if not getattr(sys, "frozen", False):
         return False
@@ -73,8 +73,11 @@ def prepare_managed_install(updater, *, progress=lambda *args: None):
         info = {"format": 1, "product": "KurtLauncher", "platform": "windows-x64",
                 "version": state["version"] if redirect else APP_VERSION, "files": records}
         atomic_json(stage / "verified.json", info)
-        updater.launch_helper(stage, installation=destination, obsolete=executable,
-                              redirect_hash=state["sha512"] if redirect else None)
+        result = updater.launch_helper(stage, installation=destination, obsolete=executable,
+                                       redirect_hash=state["sha512"] if redirect else None)
+        if setup_receipt is not None:
+            from setup_receipt import write_receipt
+            write_receipt(setup_receipt, result)
         return True
     except Exception:
         if stage.is_dir() and stage.parent == updates and stage.name.startswith("verified-install-"):

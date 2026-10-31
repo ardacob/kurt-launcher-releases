@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 # Restart as an independent PyInstaller instance: the previous onefile parent's
 # temporary runtime is deleted on exit, even when the executable path is unchanged.
 $env:PYINSTALLER_RESET_ENVIRONMENT = '1'
-$updatePlan = Get-Content -LiteralPath $Plan -Raw | ConvertFrom-Json
+$updatePlan = Get-Content -LiteralPath $Plan -Raw -Encoding UTF8 | ConvertFrom-Json
 $installPath = [IO.Path]::GetFullPath($updatePlan.installation)
 $stagePath = [IO.Path]::GetFullPath($updatePlan.stage)
 $backupPath = Join-Path $installPath ('.kurt-rollback-' + [Guid]::NewGuid().ToString('N'))
@@ -34,7 +34,7 @@ try {
     $healthPath = [IO.Path]::GetFullPath($updatePlan.health)
     if ((Split-Path -Parent $healthPath) -ne $updatesRoot -or [IO.Path]::GetExtension($healthPath) -ne '.ok') { throw 'Health marker path rejected' }
     if (Test-Path -LiteralPath $healthPath) { Remove-Item -LiteralPath $healthPath -Force }
-    $metadata = Get-Content -LiteralPath (Join-Path $stagePath 'verified.json') -Raw | ConvertFrom-Json
+    $metadata = Get-Content -LiteralPath (Join-Path $stagePath 'verified.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     if ($updatePlan.managed) {
         $expectedApp = [IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'KurtLauncher\app'))
         if ($installPath -ne $expectedApp -or $metadata.version -notmatch '^\d+\.\d+\.\d+$') { throw 'Managed installation path rejected' }
@@ -90,9 +90,9 @@ try {
     $newProcess = Start-Process -FilePath (Join-Path $installPath 'KurtLauncher.exe') -ArgumentList @('--update-health', ('"' + $healthPath + '"')) -WorkingDirectory $installPath -WindowStyle Normal -PassThru
     for ($attempt=0; $attempt -lt 45; $attempt++) {
         if (Test-Path -LiteralPath $healthPath) {
-            'Update OK' | Set-Content -LiteralPath ($Plan + '.result')
             # Cleanup is performed only after a successful startup. Failure here
             # must never roll back an already healthy application.
+            $cleanupMessage = ''
             try {
                 if ($updatePlan.managed) {
                     $installedExe = Join-Path $installPath 'KurtLauncher.exe'
@@ -120,7 +120,8 @@ try {
                 Remove-OwnedDirectory $backupPath $installPath '.kurt-rollback-'
                 $updatesRoot = [IO.Path]::GetFullPath((Join-Path $updatePlan.data 'updates'))
                 if ((Split-Path -Parent $stagePath) -eq $updatesRoot) { Remove-OwnedDirectory $stagePath $updatesRoot 'verified-' }
-            } catch { ('Cleanup deferred: ' + $_.Exception.Message) | Add-Content -LiteralPath ($Plan + '.result') }
+            } catch { $cleanupMessage = 'Cleanup deferred: ' + $_.Exception.Message }
+            @('Update OK', $cleanupMessage) | Set-Content -LiteralPath ($Plan + '.result') -Encoding UTF8
             exit 0
         }
         if ($newProcess.HasExited) { break }
@@ -137,7 +138,7 @@ try {
         $addedPath = [IO.Path]::GetFullPath((Join-Path $installPath $rel))
         if ($addedPath.StartsWith($installPath + '\',[StringComparison]::OrdinalIgnoreCase)) { Remove-Item -LiteralPath $addedPath -Force -ErrorAction SilentlyContinue }
     }
-    ('Update failed; original restored: ' + $failureText) | Set-Content -LiteralPath ($Plan + '.result')
+    ('Update failed; original restored: ' + $failureText) | Set-Content -LiteralPath ($Plan + '.result') -Encoding UTF8
     try {
         $failed = @{version=$metadata.version; message=$failureText}
         $failurePath = Join-Path $updatePlan.data 'updates\last-failure.json'

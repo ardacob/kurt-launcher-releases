@@ -35,7 +35,7 @@ def main():
     notes = (ROOT / "release-notes.md").read_text(encoding="utf-8")
     if not notes.startswith("# " + current + "\n"):
         raise ValueError("Release notes must start with '# MAJOR.MINOR.PATCH'")
-    names = [f"KurtLauncher-v{current}-Windows.zip", f"KurtLauncher-v{current}.kurtupdate",
+    names = [f"KurtLauncher-v{current}-Windows.zip", f"KurtLauncher-v{current}-Setup.exe", f"KurtLauncher-v{current}.kurtupdate",
              "latest.json", f"KurtLauncher-v{current}-SHA256.txt"]
     files = [ROOT / "artifacts" / name for name in names]
     if any(not path.is_file() or not path.stat().st_size for path in files):
@@ -62,7 +62,7 @@ def main():
             raise ValueError("GitHub asset digest mismatch: " + path.name)
     uploaded = request(release_path + "/assets?per_page=100")
     if {a["name"] for a in uploaded} != set(names):
-        raise ValueError("Draft assets do not match the four expected release files")
+        raise ValueError("Draft assets do not match the five expected release files")
     # Check again after uploads, just before changing the public update channel.
     release_state(current, releases())
     result = request(release_path, "PATCH", {"draft": False, "make_latest": "true", "body": notes})
@@ -70,7 +70,7 @@ def main():
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as stream:
-            stream.write(f"## Kurt Launcher {current}\n\n[Windows ZIP ve imzalı güncelleme]({result['html_url']})\n\n")
+            stream.write(f"## Kurt Launcher {current}\n\n[Windows Setup, ZIP ve imzalı güncelleme]({result['html_url']})\n\n")
             stream.write("Testler, Windows açılış kontrolü ve Ed25519 imzası doğrulandı.\n")
 
 

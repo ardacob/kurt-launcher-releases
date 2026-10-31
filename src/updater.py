@@ -126,7 +126,7 @@ class Updater:
         from installation import app_folder
         if installation == app_folder():
             plan["managed"] = True
-            plan["create_shortcut"] = os.environ.get("KURT_SKIP_SHORTCUT") != "1"
+            plan["create_shortcut"] = os.environ.get("KURT_SKIP_SHORTCUT") != "1" and os.environ.get("KURT_SKIP_INTEGRATION") != "1"
         if obsolete is not None:
             obsolete = Path(obsolete).resolve()
             if obsolete != current_executable or obsolete.name.lower() != "kurtlauncher.exe":
@@ -143,6 +143,7 @@ class Updater:
         subprocess.Popen([str(powershell), "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(helper), "-Plan", str(path)],
                          creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0), close_fds=True,
                          env={**os.environ, "PYINSTALLER_RESET_ENVIRONMENT": "1"})
+        return Path(str(path) + ".result")
 
     def check_feed(self, task):
         """Feed URL and publisher key are shipped by the publisher, never user content."""

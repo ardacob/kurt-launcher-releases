@@ -61,10 +61,15 @@ python sign_release.py --source release/KurtLauncher --key D:/private/release-si
 Normal yayınlar yukarıdaki Actions akışıyla yapılır. Aşağıdaki adımlar gerektiğinde elle yayınlama içindir; ücretli plan gerekmez.
 
 1. Depoda yeni release'i önce **Draft** olarak hazırlayın; etiket örneğin `v0.4.1` olsun.
-2. Windows ZIP'ini, `.kurtupdate` dosyasını, `latest.json` dosyasını ve ZIP'in SHA256 metnini ekleyin.
+2. Windows Setup.exe, ZIP, `.kurtupdate`, `latest.json` ve SHA256 metnini ekleyin.
 3. Dosyalar tamamen yüklendikten sonra taslağı yayınlayın. Duyurudaki paket adresi o release'in sürüme özel adresi olmalıdır.
 4. Anonim bağlantıyla sabit latest.json adresinin ve paket indirmesinin açıldığını doğrulayın. Uygulamada Güncellemeleri kontrol et düğmesini deneyin.
 
 Güncellemenin güveni yalnızca HTTPS'e dayanmaz: latest.json, paket hash'i ve paket içindeki dosya listesi doğrulanır. Çalışan bir sürüme geri dönmek gerekiyorsa sürüm numarası yeni bir düzeltme sürümü olarak artırılır; eski/aynı sürüm paketleri normal güncellemede reddedilir.
 
 İşlem sonuçları `data/updates/*.result` altındadır. Uygulamanın geri dönüş kopyaları `.kurt-rollback-*`; oyun/profil yedekleri `data/backups` altındadır. Ed25519 güncelleme imzası Windows Authenticode yayıncı sertifikası değildir.
+## Setup.exe üretimi (0.6.4+)
+
+Actions, temiz Windows ZIP adımından sonra `python ci/installer.py` ile NSIS 3.13 tabanlı Setup üretir. Taşınabilir derleyici resmi SourceForge adresinden alınır; SHA256 `ba63dffc4410ee89193e1cb5a41989991bd77c61068da17e3156d136b7b0b3d8` ile doğrulanır. NSIS ve kullanılan zlib sıkıştırması ücretsizdir; lisans bildirimi dağıtıma dahildir.
+
+`python ci/verify_setup.py`, gerçek Setup dosyasını ayrı LOCALAPPDATA ile çalıştırıp sağlıklı uygulama açılışını, tekrar kurulum davranışını, Türkçe yolları ve örnek mod/dünya/Minecraft dosyalarının korunmasını denetler. Testler gerçek kullanıcının masaüstü kısayolunu ve davet protokolünü değiştirmez. Setup.exe, ZIP, imzalı paket, duyuru ve SHA256 metni birlikte yayımlanır. Setup uygulama içi otomatik güncelleme kanalını değiştirmez; kurulumdan sonraki sürümler kendiliğinden alınır.

@@ -61,10 +61,16 @@ jobs:
         run: python ci/verify_restart.py
       - name: Assemble clean Windows ZIP
         run: python ci/build.py package
+      - name: Build free standalone Windows Setup
+        run: python ci/installer.py
+      - name: Verify actual Setup and repeated installation
+        run: python ci/verify_setup.py
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: windows-${{ steps.version.outputs.version }}
-          path: artifacts/*-Windows.zip
+          path: |
+            artifacts/*-Windows.zip
+            artifacts/*-Setup.exe
           if-no-files-found: error
           retention-days: 1
 

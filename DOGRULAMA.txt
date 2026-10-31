@@ -1,3 +1,12 @@
+Kurt Launcher 0.6.4 — tek dosyalı Setup kurulumu
+
+259 uygulama testi ve 9 yayın testi. CI gerçek Setup.exe ile ayrı kullanıcı
+klasörüne kurulum, açılış sağlık kaydı, açıkken tekrar çalıştırma, Türkçe
+yollar, geçici dosya temizliği ve mod/dünya/Minecraft dosyalarını korumayı
+denetler. Mevcut gerçek EXE başlangıcı, yerinde yeniden açılış ve Ed25519
+yayın doğrulamaları da çalışır.
+
+Önceki sürüm doğrulamaları:
 Kurt Launcher 0.6.3 — referans paletlerinden dokuz isimli tema
 
 256 uygulama testi: 255 geçti, yerelde symlink yetkisi olmayan 1 senaryo

@@ -1,6 +1,14 @@
-# Kurt Launcher 0.6.3
+# Kurt Launcher 0.6.4
 
 [En yeni Windows sürümünü indir](https://github.com/ardacob/kurt-launcher-releases/releases/latest) · [Tüm sürümler](https://github.com/ardacob/kurt-launcher-releases/releases) · [Otomatik derleme](https://github.com/ardacob/kurt-launcher-releases/actions/workflows/release.yml)
+
+## 0.6.4: tek dosyalı Windows kurulumu
+
+Arkadaşlarına `KurtLauncher-v0.6.4-Setup.exe` dosyasını gönderebilirsin. Çift tıklayınca yönetici yetkisi istemeden `%LOCALAPPDATA%/KurtLauncher/app` içine kurar, masaüstü kısayolunu oluşturur ve uygulamayı açar. Python, NSIS veya ZIP açma programı gerekmez. Oyun indirmeleri ilk kullanımda internetten yapılır.
+
+Profiller, Minecraft sürümleri, modlar ve dünyalar `%LOCALAPPDATA%/KurtLauncher/data` ortak arşivinde tutulur; Setup dosyasını silmek bunları silmez. Önceden kurulu yeni sürüm eski Setup ile düşürülmez. Launcher zaten açıksa yeniden kurulmaz; yeni sürüm mevcut otomatik güncelleme kanalından alınır. Otomatik güncelleme varsayılan açıktır ve oyun/sunucu çalışırken bekler.
+
+Ücretsiz NSIS 3.13 derleyicisi SHA256 ile sabitlenir; Setup gerçek Windows kurulum/açılış ve veri koruma kontrolünü geçtikten sonra her yeni sürümde GitHub Actions tarafından ZIP ve imzalı güncellemeyle birlikte yayımlanır. Setup Windows Authenticode sertifikası içermez; Ed25519 imzası uygulama içi güncellemelere aittir. NSIS lisansı `third-party/NSIS-COPYING.txt` içindedir.
 
 ## 0.6.3: dokuz isimli renk paleti
 

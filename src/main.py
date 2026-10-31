@@ -69,6 +69,8 @@ def main():
     app.setOrganizationName("KurtLauncher")
     app.setQuitOnLastWindowClosed(False)
     try:
+        from setup_receipt import receipt_argument, write_receipt
+        setup_receipt = receipt_argument(sys.argv)
         worker_data = None
         if "--update-health" in sys.argv and "--smoke-test" not in sys.argv and os.environ.get("KURT_DATA_DIR"):
             worker_data = Path(os.environ["KURT_DATA_DIR"]).resolve()
@@ -78,11 +80,14 @@ def main():
         finally:
             close_progress()
         if store is None:
-            return 0
+            return 1 if setup_receipt else 0
         from deep_links import argument_link, forward, listen, register_protocol
         pending_invite = argument_link(sys.argv)
         lock = QLockFile(str(store.root / "launcher.lock"))
         if not lock.tryLock(100):
+            if setup_receipt is not None:
+                write_receipt(setup_receipt, "ALREADY_OPEN")
+                return 0
             if pending_invite and forward(store.root, pending_invite):
                 return 0
             QMessageBox.information(None,"Kurt Launcher","Bu veri klasörünü kullanan bir launcher zaten açık.")
@@ -93,16 +98,16 @@ def main():
             from updater import Updater
             progress, close_progress = progress_dialog()
             try:
-                if prepare_managed_install(Updater(store), progress=progress):
+                if prepare_managed_install(Updater(store), progress=progress, setup_receipt=setup_receipt):
                     return 0
             finally:
                 close_progress()
-        window = Window(store.root, autostart="--smoke-test" not in sys.argv)
+        window = Window(store.root, autostart="--smoke-test" not in sys.argv and os.environ.get("KURT_DISABLE_AUTOSTART") != "1")
         if '--smoke-test' not in sys.argv:
             listen(window)
             if managed:
                 from installation import app_folder
-                if Path(sys.executable).resolve().parent == app_folder():
+                if Path(sys.executable).resolve().parent == app_folder() and os.environ.get("KURT_SKIP_INTEGRATION") != "1":
                     try: register_protocol(sys.executable)
                     except (OSError, ValueError) as exc: window.log('Davet bağlantısı kaydı: '+str(exc))
         assets = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[1])) / "assets"

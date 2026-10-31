@@ -75,7 +75,8 @@ def main():
             envelope = json.loads(archive.read("update.json"))
             verify.verify(base64.b64decode(envelope["signature"]), canonical(envelope["manifest"]))
     hashes = output / f"KurtLauncher-v{current}-SHA256.txt"
-    hashes.write_text("".join(f"{sha256(path)}  {path.name}\n" for path in (windows, package, feed)), encoding="utf-8")
+    setup = output / f"KurtLauncher-v{current}-Setup.exe"
+    hashes.write_text("".join(f"{sha256(path)}  {path.name}\n" for path in (windows, setup, package, feed)), encoding="utf-8")
     print("Publisher signatures verified; no private key in output")
 
 

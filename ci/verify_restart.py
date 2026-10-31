@@ -27,14 +27,14 @@ def verify(executable, current):
         value = hashlib.sha512(target.read_bytes()).hexdigest()
         (stage / 'verified.json').write_text(json.dumps({'version':current, 'files':{
             target.name:{'size':target.stat().st_size, 'sha512':value}}}))
-        (data / 'settings.json').write_text(json.dumps({'auto_check_updates':False, 'auto_install_updates':False}))
+        (data / 'settings.json').write_text(json.dumps({'auto_update_check':False, 'auto_install_updates':False}))
         sentinel = data / 'world.dat'
         sentinel.write_bytes(b'preserved-world')
         health = data / 'updates/restart.ok'
         plan = data / 'updates/restart.json'
         plan.write_text(json.dumps({'installation':str(app), 'stage':str(stage), 'data':str(data),
             'pid':2147483647, 'managed':True, 'create_shortcut':False, 'health':str(health)}))
-        env = dict(os.environ, LOCALAPPDATA=str(local), KURT_SKIP_SHORTCUT='1', QT_QPA_PLATFORM='offscreen',
+        env = dict(os.environ, LOCALAPPDATA=str(local), KURT_SKIP_SHORTCUT='1', KURT_SKIP_INTEGRATION='1', KURT_DISABLE_AUTOSTART='1', QT_QPA_PLATFORM='offscreen',
                    _PYI_ARCHIVE_FILE=str(target), _PYI_APPLICATION_HOME_DIR=str(base / 'deleted-old-runtime'),
                    _PYI_PARENT_PROCESS_LEVEL='1')
         env.pop('PYINSTALLER_RESET_ENVIRONMENT', None)
