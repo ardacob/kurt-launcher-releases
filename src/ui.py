@@ -108,8 +108,9 @@ QCheckBox::indicator:checked { background: #ff9b78; border: 2px solid #e16f8e; }
 """
 
 
-def label(text, style=None, wrap=False):
+def label(text, style=None, wrap=False, translate=True):
     item = QLabel(text)
+    item.setProperty('user_content',not translate)
     if style:
         item.setObjectName(style)
     item.setWordWrap(wrap)
@@ -1264,9 +1265,11 @@ class Window(Journeys, Management, ContentWorkshops, ShaderWorkshop, Enhancement
         p=self.profile
         self.installed.setRowCount(0)
         if not p:
+            self.profile_title.setProperty('user_content',False)
             self.profile_title.setText("İlk profilini oluştur")
             self.mod_count.setText("")
             return
+        self.profile_title.setProperty('user_content',True)
         self.profile_title.setText(p["name"])
         self.profile_info.setText(f"Minecraft {p['version']}   /   {p['loader'].title()}" + (f" {p['loader_version']}" if p.get("loader_version") else "") + ("   •   Kurulu" if p.get("installed") else "   •   Henüz kurulmadı"))
         self.mod_subtitle.setText(f"{p['name']}  •  {p['version']} / {p['loader'].title()}" + (" — Mod kurmak için yükleyicili profil oluştur." if p["loader"]=="vanilla" else " — Uyumlu modlar ve gerekli bağımlılıkları."))
@@ -1377,7 +1380,7 @@ class Window(Journeys, Management, ContentWorkshops, ShaderWorkshop, Enhancement
             box.addLayout(card)
             box = content
             row=QHBoxLayout()
-            row.addWidget(label(hit["title"],"cardTitle"))
+            row.addWidget(label(hit["title"],"cardTitle",translate=False))
             info = hit.get("version_info")
             if info:
                 channels = {"release": "Kararlı", "beta": "Beta", "alpha": "Alpha"}
@@ -1392,7 +1395,7 @@ class Window(Journeys, Management, ContentWorkshops, ShaderWorkshop, Enhancement
             # Dynamic buttons consult the common worker guard rather than entering actions.
             row.addWidget(install)
             box.addLayout(row)
-            box.addWidget(label(hit["description"],"muted",True))
+            box.addWidget(label(hit["description"],"muted",True,translate=False))
             version_label = label(mod_version_text(hit), "compatible" if info else "muted", True)
             if info:
                 version_label.setToolTip("Desteklenen Minecraft sürümleri: " + ", ".join(info.get("game_versions", [])))
@@ -1440,8 +1443,8 @@ class Window(Journeys, Management, ContentWorkshops, ShaderWorkshop, Enhancement
         header.setSpacing(18)
         header.addWidget(mod_logo(hit, 88))
         title = QVBoxLayout()
-        title.addWidget(label(hit["title"], "title"))
-        title.addWidget(label(hit["description"], "muted", True))
+        title.addWidget(label(hit["title"], "title",translate=False))
+        title.addWidget(label(hit["description"], "muted", True,translate=False))
         header.addLayout(title, 1)
         box.addLayout(header)
         box.addWidget(label(mod_version_text(hit), "compatible" if hit.get("version_info") else "muted", True))
@@ -1618,10 +1621,13 @@ class Window(Journeys, Management, ContentWorkshops, ShaderWorkshop, Enhancement
         if offline:
             try:
                 nickname = offline_account(self.store.settings.get("offline_username", ""))["name"]
+                self.account_label.setProperty('user_content',True)
             except LauncherError:
                 nickname = "Kullanıcı adıyla giriş"
+                self.account_label.setProperty('user_content',False)
             self.account_label.setText(nickname)
         else:
+            self.account_label.setProperty('user_content',bool(name))
             self.account_label.setText(name or "Hesap bağlı değil")
         self.username.setVisible(offline)
         self.login_button.setText("Giriş yap" if offline else "Hesabı değiştir" if name else "Microsoft ile giriş")

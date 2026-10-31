@@ -10,9 +10,9 @@ from core import LauncherError
 from shaders import ENGINES
 
 
-def shader_text(value, style='muted'):
+def shader_text(value, style='muted', translate=True):
     from ui import label
-    item = label(str(value), style, True)
+    item = label(str(value), style, True, translate=translate)
     item.setTextFormat(Qt.PlainText)
     return item
 
@@ -217,10 +217,10 @@ class ShaderWorkshop:
                 row.addWidget(mod_logo(hit, 84), 0, Qt.AlignTop)
             content = QVBoxLayout()
             title_row = QHBoxLayout()
-            title_row.addWidget(shader_text(hit['title'], 'cardTitle'), 1)
+            title_row.addWidget(shader_text(hit['title'], 'cardTitle',translate=False), 1)
             title_row.addWidget(shader_text(f"{hit.get('downloads', 0):,} indirme".replace(',', '.')))
             content.addLayout(title_row)
-            content.addWidget(shader_text(hit.get('description', '')))
+            content.addWidget(shader_text(hit.get('description', ''),translate=False))
             info = hit.get('version_info')
             if info:
                 engines = ' / '.join(ENGINES[v] for v in info.get('loaders', []) if v in ENGINES)

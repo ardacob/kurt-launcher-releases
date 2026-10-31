@@ -1,6 +1,6 @@
-Kurt Launcher 0.6.0 — modern tema ve sekiz yeni oyun aracı, 31 Ekim 2026
+Kurt Launcher 0.6.1 — modern tema ve sekiz yeni oyun aracı, 31 Ekim 2026
 
-248 uygulama + 9 yayın testi. Yerelde yalnız symlink oluşturma yetkisi
+250 uygulama + 9 yayın testi. Yerelde yalnız symlink oluşturma yetkisi
 olmayan senaryo atlanır. Windows dünya kilidi, gerçek yerel TCP ve farklı
 süreçler arasında QLocalServer davet aktarımı çalıştırılır.
 
@@ -236,4 +236,5 @@ TAMAMLANMASI DIŞ HESAP/ORTAM GEREKTİREN DOĞRULAMALAR
 Önceki 0.3.x gerçek Minecraft 1.20.1 / Fabric / Java 17 kurulumları ve
 Playit yerel IPC denemeleri geçmiş doğrulamalardır; 0.4.0'da gerçek oyun
 başlatma veya gerçek internet tüneli denenmiş gibi değerlendirilmemelidir.
+
 

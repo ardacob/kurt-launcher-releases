@@ -1,4 +1,4 @@
-# 0.6.0
+# 0.6.1
 
 Modern açık/koyu tema ve sekiz yeni oyun aracı.
 
@@ -16,4 +16,5 @@ Araçlar: Ana ekran → hızlı devam/favoriler/aktarım; Kütüphane → Yönet
 
 Ortak oyun arşivi, profiller, Minecraft sürümleri, modlar ve dünyalar korunur. Ücretli hizmet gerekmez. GitHub Actions test, Windows derleme, yayıncı imzası ve otomatik yayını aynı ücretsiz kanalda sürdürür.
 
-Doğrulama: 248 uygulama testi ve 9 yayın testi; gerçek yerel Java durum/ping sunucusu, farklı süreçler arasında davet aktarımı, kaynak hash'lerini koruyan kopya, değişen dosyalı geri dönüş ve bozuk yedek koruması. Windows açık/koyu arayüzü kontrol edildi. Paket CI üzerinde gerçek EXE başlangıcı ve yerinde otomatik yeniden açılışla ayrıca kontrol edilir.
+Doğrulama: 250 uygulama testi ve 9 yayın testi; gerçek yerel Java durum/ping sunucusu, farklı süreçler arasında davet aktarımı, kaynak hash'lerini koruyan kopya, değişen dosyalı geri dönüş ve bozuk yedek koruması. Windows açık/koyu arayüzü kontrol edildi. Paket CI üzerinde gerçek EXE başlangıcı ve yerinde otomatik yeniden açılışla ayrıca kontrol edilir.
+

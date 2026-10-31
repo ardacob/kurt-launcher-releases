@@ -532,7 +532,10 @@ class Localization:
     def refresh(self):
         window=self.window;language=window.store.settings.get('language','tr')
         excluded=[getattr(window,n,None) for n in ('profiles','collection_select','backup_target','world_backup_choice','server_select','diagnostic_choice')]
+        translated_columns={id(getattr(window,name,None)):columns for name,columns in
+            (('favorites_table',{2,3,4}),('session_totals',{1,2}),('session_table',{1,2,3}))}
         for widget in window.findChildren(QWidget):
+            if widget.property('user_content'):continue
             if isinstance(widget,(QLabel,QAbstractButton,QGroupBox)):
                 getter=widget.title if isinstance(widget,QGroupBox) else widget.text
                 setter=widget.setTitle if isinstance(widget,QGroupBox) else widget.setText
@@ -548,6 +551,9 @@ class Localization:
                 try:
                     for i in range(widget.count()):
                         # Item data remains stable; user-created names are excluded above.
+                        # Data-less pickers return their displayed text as the value.
+                        # Translating that text would change the user's selected name/path.
+                        if widget.itemData(i) is None:continue
                         self.property_text(widget,'item'+str(i),lambda i=i:widget.itemText(i),lambda v,i=i:widget.setItemText(i,v),language)
                 finally:widget.blockSignals(was)
             if isinstance(widget,QTabWidget):
@@ -557,7 +563,7 @@ class Localization:
                     item=widget.horizontalHeaderItem(i)
                     if item:self.property_text(widget,'header'+str(i),item.text,item.setText,language)
                 for row in range(widget.rowCount()):
-                    for col in range(1,widget.columnCount()):
+                    for col in translated_columns.get(id(widget),set()):
                         item=widget.item(row,col)
                         if item:self.property_text(widget,f'cell{row}_{col}',item.text,item.setText,language)
             if isinstance(widget,QPlainTextEdit) and widget.isReadOnly():

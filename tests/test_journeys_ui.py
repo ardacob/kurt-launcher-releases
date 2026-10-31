@@ -40,6 +40,7 @@ class JourneyUiTests(unittest.TestCase):
         w.language_choice.setCurrentIndex(w.language_choice.findData('en'));w.save_interface()
         self.assertEqual(w.property('visual_theme'),'sunset');self.assertIn('font-size: 16px',w.styleSheet())
         self.assertIn('Game hub',w.nav[0].text());self.assertEqual(w.profiles.currentText(),'Dünyalarım')
+        self.assertEqual(w.profile_title.text(),'Dünyalarım')
         self.assertEqual(w.management_tabs.tabText(3),'Favorite servers');self.assertEqual(w.theme_choice.currentData(),'sunset')
         w.theme_choice.setCurrentIndex(w.theme_choice.findData('light'));w.language_choice.setCurrentIndex(w.language_choice.findData('tr'));w.save_interface()
         self.assertIn('Oyun merkezi',w.nav[0].text());self.assertEqual(w.management_tabs.tabText(3),'Favori sunucular')
@@ -82,6 +83,22 @@ class JourneyUiTests(unittest.TestCase):
         self.window.favorite_name.setText('Friends');self.window.favorite_address.setText('localhost:25565');self.window.add_favorite_server()
         self.assertEqual(self.window.favorite_rows[0]['profile'],self.p['id']);self.assertEqual(self.window.favorites_table.rowCount(),1)
         self.window.favorites_table.selectRow(0);self.window.remove_favorite_server();self.assertEqual(self.window.favorites_table.rowCount(),0)
+
+    def test_english_preserves_user_picker_values_and_favorite_profile_names(self):
+        from PySide6.QtWidgets import QComboBox
+        w=self.window;picker=QComboBox(w);picker.addItems(['Favoriler','Dünyalarım'])
+        w.favorite_name.setText('Dünyalarım');w.favorite_address.setText('localhost');w.add_favorite_server()
+        w.store.settings.update(language='en',offline_username='Oyuncu');w.refresh_account();w.localization.refresh()
+        self.assertEqual(picker.itemText(0),'Favoriler');self.assertEqual(picker.itemText(1),'Dünyalarım')
+        self.assertEqual(w.favorites_table.item(0,1).text(),'Dünyalarım');self.assertEqual(w.account_label.text(),'Oyuncu')
+
+    def test_english_does_not_translate_third_party_mod_titles_or_descriptions(self):
+        from ui import label
+        from shader_ui import shader_text
+        title=label('Dünyalarım','cardTitle',translate=False);title.setParent(self.window)
+        description=shader_text('Dünyana yeni bir ışık kat',translate=False);description.setParent(self.window)
+        self.window.store.settings['language']='en';self.window.localization.refresh()
+        self.assertEqual(title.text(),'Dünyalarım');self.assertEqual(description.text(),'Dünyana yeni bir ışık kat')
 
 
 if __name__=='__main__':unittest.main()
