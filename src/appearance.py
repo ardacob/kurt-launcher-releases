@@ -1,8 +1,86 @@
-"""Modern light, sunset, system and high-contrast palettes with scalable controls."""
+"""Named color palettes, readable theme roles and scalable application controls."""
 import re
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor,QPalette
 from PySide6.QtWidgets import QApplication
+
+PALETTE_THEMES=(
+ ('midnight_lilac','Gece Leylağı',('#2b2c6c','#6064ae','#9f92c7','#ebc9e1'),True,0,1,3,(2,3,3)),
+ ('raspberry','Ahududu',('#f490b2','#f06491','#af1d5b','#901b52'),True,3,2,0,(0,1,1)),
+ ('olive_garden','Zeytin Bahçesi',('#c2bb85','#dad5ab','#efefcb','#fcfce4'),False,3,0,0,(0,1,2)),
+ ('pastel_earth','Pastel Toprak',('#9b6f90','#87a7a6','#d7cbb5','#f1e2cf'),False,3,1,0,(3,2,1)),
+ ('coral_mint','Mercan Nane',('#b3cec5','#c9e7cf','#fed374','#f04c4d'),False,1,0,3,(0,2,3)),
+ ('tropical_sunset','Tropik Gün Batımı',('#de7428','#fcb53f','#fbe59c','#66c7ce'),False,2,3,0,(0,1,3)),
+ ('ember_night','Köz Gecesi',('#0b2035','#2c394c','#344756','#ef4f2d'),True,0,1,3,(3,3,3)),
+ ('peach_cream','Şeftali Kreması',('#fdeef1','#f8ded1','#dad1c2','#cdbba7'),False,0,2,3,(0,1,3)),
+ ('rose_charcoal','Gül Kömürü',('#020202','#bd4d4c','#efb7b8','#eeeeee'),True,0,1,2,(1,2,2)),
+)
+PALETTE_IDS={row[0] for row in PALETTE_THEMES}
+
+
+def mix(first,second,amount):
+    a,b=QColor(first),QColor(second)
+    return QColor(*(round(x+(y-x)*amount) for x,y in zip(a.getRgb()[:3],b.getRgb()[:3]))).name()
+
+
+def luminance(color):
+    parts=QColor(color).getRgbF()[:3]
+    linear=[c/12.92 if c<=.04045 else ((c+.055)/1.055)**2.4 for c in parts]
+    return sum(c*w for c,w in zip(linear,(.2126,.7152,.0722)))
+
+
+def contrast(first,second):
+    a,b=sorted((luminance(first),luminance(second)))
+    return (b+.05)/(a+.05)
+
+
+def readable(color,backgrounds,minimum=4.5):
+    if min(contrast(color,bg) for bg in backgrounds)>=minimum:return color
+    target=max(('#000000','#ffffff'),key=lambda c:min(contrast(c,bg) for bg in backgrounds))
+    for step in range(1,21):
+        candidate=mix(color,target,step/20)
+        if min(contrast(candidate,bg) for bg in backgrounds)>=minimum:return candidate
+    return target
+
+
+def gradient_samples(colors):
+    return [mix(first,second,i/12) for first,second in zip(colors,colors[1:]) for i in range(13)]
+
+
+def gradient_ink(colors):
+    for step in range(21):
+        adjusted=[mix(c,'#ffffff',step/20) for c in colors]
+        samples=gradient_samples(adjusted)
+        ink=max(('#000000','#ffffff'),key=lambda c:min(contrast(c,bg) for bg in samples))
+        if min(contrast(ink,bg) for bg in samples)>=4.5:return adjusted,ink
+    return adjusted,ink
+
+
+def build_palette(row):
+    key,title,colors,dark,base,secondary,accent,buttons=row
+    seed,other=colors[base],colors[secondary]
+    if dark:
+        bg=mix(seed,'#000000',.28 if luminance(seed)>.06 else .10)
+        surface=mix(seed,other,.16)
+        roles=dict(bg=bg,surface=surface,side=mix(bg,'#000000',.12),field=mix(bg,'#000000',.10),
+                   soft=mix(surface,other,.16),hover=mix(surface,colors[accent],.16),
+                   selected=mix(surface,colors[accent],.20),border=mix(surface,other,.55),handle=mix(other,colors[accent],.30))
+        text=mix(max(colors,key=luminance),'#ffffff',.80)
+        muted=mix(text,other,.25)
+    else:
+        roles=dict(bg=mix(seed,'#ffffff',.24),surface=mix(seed,'#ffffff',.75),side=mix(seed,'#ffffff',.55),
+                   field=mix(seed,'#ffffff',.36),soft=mix(seed,other,.12),hover=mix(seed,other,.22),
+                   selected=mix(seed,colors[accent],.18),border=mix(seed,other,.40),handle=mix(other,colors[accent],.35))
+        text=mix(min(colors,key=luminance),'#000000',.70)
+        muted=mix(min(colors,key=luminance),'#000000',.46)
+    backgrounds=[roles[name] for name in ('bg','surface','side','field','soft','hover','selected')]
+    roles.update(text=readable(text,backgrounds),muted=readable(muted,backgrounds),
+                 accent=readable(colors[accent],backgrounds),danger=readable('#ff6373' if dark else '#a82c40',backgrounds))
+    stops=[colors[i] for i in buttons]
+    if key=='ember_night':stops[1]=mix(stops[0],'#ffffff',.12);stops[2]=mix(stops[0],'#ffffff',.24)
+    stops,ink=gradient_ink(stops)
+    roles.update(primary=stops[0],primary_mid=stops[1],primary2=stops[2],onprimary=ink)
+    return roles
 
 PALETTES={
  'light':dict(bg='#f3f5fa',surface='#ffffff',side='#fafbfe',field='#f7f8fc',border='#dce2ee',
@@ -14,6 +92,39 @@ PALETTES={
  'contrast':dict(bg='#000000',surface='#000000',side='#000000',field='#000000',border='#ffffff',
               text='#ffffff',muted='#ffffff',soft='#111111',hover='#333333',selected='#002b48',
               accent='#ffff00',primary='#ffff00',primary2='#ffff00',onprimary='#000000',danger='#ffb7b7',handle='#ffffff')}
+PALETTES.update({row[0]:build_palette(row) for row in PALETTE_THEMES})
+
+
+def theme_colors(settings):
+    theme=selected_theme(settings);p=dict(PALETTES[theme])
+    p.setdefault('primary_mid',mix(p['primary'],p['primary2'],.5))
+    accent=settings.get('accent')
+    allow_custom=theme not in PALETTE_IDS or settings.get('use_custom_accent',False)
+    if accent and QColor(accent).isValid() and theme!='contrast' and allow_custom:
+        p['primary']=p['primary_mid']=p['primary2']=accent
+        p['onprimary']=readable('#000000',[accent])
+    return p,theme
+
+
+def hero_colors(theme,roles):
+    preset=next((row for row in PALETTE_THEMES if row[0]==theme),None)
+    if preset:
+        colors=preset[2]
+        return dict(sky0=colors[0],sky1=colors[1],sky2=colors[2],sun=max(colors,key=luminance),
+                    sunline=colors[1],cloud=colors[2],mountain0=colors[1],mountain1=colors[2],mountain2=colors[0],
+                    ground=colors[0],grass=colors[3],stone=colors[1],trunk=colors[1],tree0=colors[0],tree1=colors[2],
+                    shade=roles['bg'],eyebrow=roles['accent'],title=roles['text'],muted=roles['muted'])
+    if theme=='contrast':
+        return dict(sky0='#000000',sky1='#111111',sky2='#333333',sun='#ffff00',sunline='#ffffff',cloud='#ffffff',
+                    mountain0='#333333',mountain1='#666666',mountain2='#111111',ground='#000000',grass='#ffff00',
+                    stone='#ffffff',trunk='#ffffff',tree0='#111111',tree1='#333333',shade='#000000',
+                    eyebrow='#ffff00',title='#ffffff',muted='#ffffff')
+    light=theme=='light'
+    return dict(sky0='#f6e9df' if light else '#211e35',sky1='#f8caa6' if light else '#a04b72',
+                sky2='#ffe7be' if light else '#f79e70',sun='#ffd293',sunline='#e98c8e',cloud='#efa4b1',
+                mountain0='#6b365d',mountain1='#9b526d',mountain2='#442440',ground='#2d1c30',grass='#b86c76',
+                stone='#4c2b42',trunk='#50304a',tree0='#251a32',tree1='#3b2547',shade='#faf4ed' if light else '#0e0f18',
+                eyebrow='#99432e' if light else '#ffb078',title='#28354a' if light else '#fff0ec',muted='#5f5661' if light else '#e3becb')
 
 
 def selected_theme(settings):
@@ -23,14 +134,7 @@ def selected_theme(settings):
 
 
 def stylesheet(settings):
-    theme=selected_theme(settings);p=dict(PALETTES[theme]);scale=max(90,min(140,int(settings.get('ui_scale',100))))/100
-    accent=settings.get('accent')
-    if accent and QColor(accent).isValid() and theme!='contrast':
-        # User accent affects decoration, while text keeps the palette's readable contrast.
-        p['primary']=accent
-        color=QColor(accent);luminance=.2126*color.redF()+.7152*color.greenF()+.0722*color.blueF()
-        p['onprimary']='#172033' if luminance>.55 else '#ffffff'
-        p['primary2']=accent
+    p,theme=theme_colors(settings);scale=max(90,min(140,int(settings.get('ui_scale',100))))/100
     css="""
 * { font-family: 'Segoe UI'; font-size: 13px; color: @text; }
 QMainWindow, QWidget#root { background: @bg; }
@@ -54,7 +158,7 @@ QPushButton:hover { background: @hover; border-color: @handle; }
 QPushButton:pressed, QPushButton:checked { background: @selected; color: @accent; border-color: @accent; }
 QPushButton:disabled { color: @muted; background: @field; }
 QPushButton:focus, QCheckBox:focus, QTabBar::tab:focus { border: 2px solid @accent; }
-QPushButton#primary { background: qlineargradient(x1:0,y1:0,x2:1,y2:1,stop:0 @primary,stop:1 @primary2); color: @onprimary; border: 1px solid transparent; padding: 12px 18px; font-size: 14px; font-weight: 750; }
+QPushButton#primary { background: qlineargradient(x1:0,y1:0,x2:1,y2:1,stop:0 @primary,stop:0.5 @primary_mid,stop:1 @primary2); color: @onprimary; border: 1px solid transparent; padding: 12px 18px; font-size: 14px; font-weight: 750; }
 QPushButton#primary:hover { border-color: @accent; }
 QPushButton#primary:focus { border: 2px solid @text; }
 QPushButton#primary:disabled { background: @soft; color: @muted; }
@@ -86,7 +190,7 @@ QTabBar::tab:hover { color: @text; }
 QPlainTextEdit, QTextBrowser, QTextEdit { background: @field; color: @text; border: 1px solid @border; border-radius: 10px; padding: 12px; selection-background-color: @selected; selection-color: @text; }
 QPlainTextEdit { font-family: Consolas; }
 QProgressBar { background: @border; border: none; border-radius: 4px; height: 7px; }
-QProgressBar::chunk { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 @primary,stop:1 @primary2); border-radius: 4px; }
+QProgressBar::chunk { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 @primary,stop:0.5 @primary_mid,stop:1 @primary2); border-radius: 4px; }
 QToolTip { background: @surface; color: @text; border: 1px solid @border; padding: 8px; }
 QDialog, QMessageBox, QMenu { background: @surface; }
 QMenu::item:selected { background: @selected; }
@@ -113,6 +217,9 @@ def apply(window):
     # Modal dialogs and popups are top-level widgets; give them the same palette.
     QApplication.instance().setPalette(palette)
     window.setProperty('visual_theme',theme)
+    window._hero_colors=hero_colors(theme,colors)
+    if hasattr(window,'theme_cards'):
+        for key,card in window.theme_cards.items():card.setChecked(key==theme)
     for item in window.findChildren(QWidgetLandscape()):item.update()
 
 

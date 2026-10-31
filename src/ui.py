@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QObject, Signal, QRunnable, QThreadPool, QTimer, QUrl
-from PySide6.QtGui import QColor, QPainter, QLinearGradient, QPolygonF, QDesktopServices, QFont, QPixmap, QImageReader, QPainterPath, QIcon
+from PySide6.QtGui import QColor, QPainter, QLinearGradient, QPolygonF, QDesktopServices, QFont, QPixmap, QImageReader, QPainterPath, QIcon, QPalette
 from PySide6.QtCore import QPointF, QRectF, QSize
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QLabel,
@@ -126,8 +126,8 @@ def logo_pixmap(title, path, size):
     clip.addRoundedRect(QRectF(0, 0, size, size), 12, 12)
     painter.setClipPath(clip)
     gradient = QLinearGradient(0, 0, size, size)
-    gradient.setColorAt(0, QColor("#743b53"))
-    gradient.setColorAt(1, QColor("#302039"))
+    gradient.setColorAt(0, QApplication.palette().color(QPalette.Highlight))
+    gradient.setColorAt(1, QApplication.palette().color(QPalette.Button))
     painter.fillRect(tile.rect(), gradient)
     image = QPixmap()
     if path:
@@ -139,7 +139,7 @@ def logo_pixmap(title, path, size):
     if not image.isNull():
         painter.drawPixmap((size - image.width()) // 2, (size - image.height()) // 2, image)
     else:
-        painter.setPen(QColor("#ffc49a"))
+        painter.setPen(QApplication.palette().color(QPalette.Text))
         painter.setFont(QFont("Segoe UI", max(12, size // 4), QFont.Bold))
         initials = "".join(word[0] for word in title.split()[:2]).upper() or "M"
         painter.drawText(tile.rect(), Qt.AlignCenter, initials)
@@ -184,49 +184,51 @@ class Landscape(QWidget):
         p.setRenderHint(QPainter.Antialiasing)
         w, h = self.width(), self.height()
         clip=QPainterPath();clip.addRoundedRect(QRectF(self.rect()),18,18);p.setClipPath(clip)
-        light=self.window().property('visual_theme')=='light'
+        from appearance import hero_colors,PALETTES
+        colors=getattr(self.window(),'_hero_colors',None) or hero_colors('light',PALETTES['light'])
         gradient = QLinearGradient(0, 0, w * .25, h)
-        gradient.setColorAt(0, QColor('#f6e9df' if light else '#211e35'))
-        gradient.setColorAt(.46, QColor('#f8caa6' if light else '#a04b72'))
-        gradient.setColorAt(1, QColor('#ffe7be' if light else '#f79e70'))
+        gradient.setColorAt(0, QColor(colors['sky0']))
+        gradient.setColorAt(.46, QColor(colors['sky1']))
+        gradient.setColorAt(1, QColor(colors['sky2']))
         p.fillRect(self.rect(), gradient)
         p.setPen(Qt.NoPen)
-        p.fillRect(QRectF(w * .80 - 7, 44, 76, 76), QColor(255, 173, 122, 38))
-        p.fillRect(QRectF(w * .80, 51, 62, 62), QColor("#ffd293"))
-        p.fillRect(QRectF(w * .80, 94, 62, 5), QColor("#e98c8e"))
-        p.fillRect(QRectF(w * .65, 36, 48, 8), QColor(239, 164, 177, 100))
-        p.fillRect(QRectF(w * .87, 29, 68, 9), QColor(239, 164, 177, 100))
-        for points, color in [([(.37,.76),(.57,.16),(.77,.77)], "#6b365d"),
-                               ([(.56,.8),(.78,.29),(1,.81)], "#9b526d"),
-                               ([(.75,.85),(.94,.12),(1.18,.85)], "#442440")]:
+        halo=QColor(colors['sun']);halo.setAlpha(38)
+        cloud=QColor(colors['cloud']);cloud.setAlpha(100)
+        p.fillRect(QRectF(w * .80 - 7, 44, 76, 76),halo)
+        p.fillRect(QRectF(w * .80, 51, 62, 62), QColor(colors['sun']))
+        p.fillRect(QRectF(w * .80, 94, 62, 5), QColor(colors['sunline']))
+        p.fillRect(QRectF(w * .65, 36, 48, 8),cloud)
+        p.fillRect(QRectF(w * .87, 29, 68, 9),cloud)
+        for points, color in [([(.37,.76),(.57,.16),(.77,.77)],colors['mountain0']),
+                               ([(.56,.8),(.78,.29),(1,.81)],colors['mountain1']),
+                               ([(.75,.85),(.94,.12),(1.18,.85)],colors['mountain2'])]:
             p.setBrush(QColor(color))
             # Steps on the mountain ridgeline echo blocks rather than smooth peaks.
             p.drawPolygon(QPolygonF([QPointF(x*w,y*h) for x,y in points]))
         for i in range(19):
             x = w*.46 + i*w*.034
             top = h*.73 + math.sin(i*.65)*h*.055
-            p.fillRect(QRectF(x, top, w*.035+1, h-top), QColor("#2d1c30"))
-            p.fillRect(QRectF(x, top, w*.035+1, 9), QColor("#b86c76"))
+            p.fillRect(QRectF(x, top, w*.035+1, h-top), QColor(colors['ground']))
+            p.fillRect(QRectF(x, top, w*.035+1, 9), QColor(colors['grass']))
             for j in range(3):
                 if (i+j)%3==0:
-                    p.fillRect(QRectF(x+4,top+25+j*19,8,6),QColor("#4c2b42"))
+                    p.fillRect(QRectF(x+4,top+25+j*19,8,6),QColor(colors['stone']))
         for x, y, scale in [(w*.69,h*.58,1), (w*.91,h*.48,1.2), (w*.57,h*.66,.7)]:
-            p.fillRect(QRectF(x,y,9*scale,48*scale),QColor("#50304a"))
-            p.fillRect(QRectF(x-17*scale,y-13*scale,44*scale,29*scale),QColor("#251a32"))
-            p.fillRect(QRectF(x-9*scale,y-29*scale,28*scale,28*scale),QColor("#3b2547"))
+            p.fillRect(QRectF(x,y,9*scale,48*scale),QColor(colors['trunk']))
+            p.fillRect(QRectF(x-17*scale,y-13*scale,44*scale,29*scale),QColor(colors['tree0']))
+            p.fillRect(QRectF(x-9*scale,y-29*scale,28*scale,28*scale),QColor(colors['tree1']))
         shade = QLinearGradient(0, 0, w*.74, 0)
-        shade.setColorAt(0, QColor(250,244,237,250) if light else QColor(14,15,24,250))
-        shade.setColorAt(.62, QColor(250,244,237,218) if light else QColor(14,15,24,218))
-        shade.setColorAt(1, QColor(250,244,237,0) if light else QColor(14,15,24,0))
+        for position,alpha in ((0,250),(.62,242),(1,0)):
+            color=QColor(colors['shade']);color.setAlpha(alpha);shade.setColorAt(position,color)
         p.fillRect(self.rect(), shade)
-        p.setPen(QColor('#99432e' if light else '#ffb078'))
+        p.setPen(QColor(colors['eyebrow']))
         p.setFont(QFont("Segoe UI", 9, QFont.Bold))
         english=getattr(self.window(),'store',None) and self.window().store.settings.get('language')=='en'
         p.drawText(28, 35, 'YOUR GAME. YOUR WORLD.' if english else 'SENİN OYUNUN. SENİN DÜNYAN.')
-        p.setPen(QColor('#28354a' if light else '#fff0ec'))
+        p.setPen(QColor(colors['title']))
         p.setFont(QFont('Segoe UI',23,QFont.Bold))
         p.drawText(QRectF(26,54,w*.66,100), Qt.AlignLeft, 'One world.\nEndless possibilities.' if english else 'Bir dünya.\nBinlerce olasılık.')
-        p.setPen(QColor('#5f5661' if light else '#e3becb'))
+        p.setPen(QColor(colors['muted']))
         p.setFont(QFont("Segoe UI", 11))
         p.drawText(QRectF(28,h-48,w*.74,42),Qt.AlignLeft|Qt.TextWordWrap,'Pick a version. Add your mods. Make it yours.' if english else 'Sürümünü seç. Modlarını ekle. Kendi maceranı kur.')
 

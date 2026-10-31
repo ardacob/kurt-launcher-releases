@@ -56,6 +56,33 @@ class JourneyUiTests(unittest.TestCase):
             css,palette,selected=stylesheet({'theme':theme,'accent':'#ff0000','ui_scale':140})
             self.assertNotIn('@',css);self.assertNotIn('#ff00002',css);self.assertIn('font-size: 18px',css)
 
+    def test_palette_cards_apply_unique_themes_and_persist_without_erasing_custom_color(self):
+        from appearance import PALETTE_THEMES
+        from core import Store
+        w=self.window;w.store.settings.update(accent='#0011ff',use_custom_accent=True)
+        for key,*_ in PALETTE_THEMES:
+            w.theme_cards[key].click()
+            self.assertEqual(w.property('visual_theme'),key);self.assertEqual(w.theme_choice.currentData(),key)
+            self.assertEqual([k for k,card in w.theme_cards.items() if card.isChecked()],[key])
+            self.assertEqual(Store(w.store.root).settings['theme'],key)
+            self.assertEqual(w.store.settings['accent'],'#0011ff');self.assertFalse(w.store.settings['use_custom_accent'])
+
+    def test_palette_names_translate_and_keyboard_activation_keeps_theme_identity(self):
+        w=self.window;w.open_appearance_settings();w.store.settings['language']='en';w.localization.refresh()
+        card=w.theme_cards['midnight_lilac'];self.assertEqual(card.text(),'Midnight Lilac')
+        self.assertEqual(w.theme_choice.itemText(w.theme_choice.findData('rose_charcoal')),'Rose Charcoal')
+        card.setFocus();QTest.keyClick(card,Qt.Key_Space);app.processEvents()
+        self.assertEqual(w.store.settings['theme'],'midnight_lilac');self.assertEqual(card.accessibleName(),'Midnight Lilac')
+
+    def test_home_landscape_repaints_for_every_palette(self):
+        import hashlib
+        from ui import Landscape
+        w=self.window;w.navigate(0);hero=w.findChildren(Landscape)[0];fingerprints=set()
+        for key in w.theme_cards:
+            w.choose_palette_theme(key);app.processEvents();image=hero.grab().toImage()
+            fingerprints.add(hashlib.sha256(bytes(image.constBits())).hexdigest())
+        self.assertEqual(len(fingerprints),9)
+
     def test_keyboard_navigation_shortcuts(self):
         QTest.keyClick(self.window,Qt.Key_3,Qt.ControlModifier);app.processEvents()
         self.assertEqual(self.window.pages.currentIndex(),9)

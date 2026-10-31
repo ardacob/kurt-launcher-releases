@@ -1,6 +1,18 @@
-# Kurt Launcher 0.6.2
+# Kurt Launcher 0.6.3
 
 [En yeni Windows sürümünü indir](https://github.com/ardacob/kurt-launcher-releases/releases/latest) · [Tüm sürümler](https://github.com/ardacob/kurt-launcher-releases/releases) · [Otomatik derleme](https://github.com/ardacob/kurt-launcher-releases/actions/workflows/release.yml)
+
+## 0.6.3: dokuz isimli renk paleti
+
+**Ayarlar → Görünüm** bölümünde renk örnekli 3×3 kartlardan birini seçerek temayı anında uygula. Görseldeki sıra korunur:
+
+| Sol | Orta | Sağ |
+| --- | --- | --- |
+| Gece Leylağı | Ahududu | Zeytin Bahçesi |
+| Pastel Toprak | Mercan Nane | Tropik Gün Batımı |
+| Köz Gecesi | Şeftali Kreması | Gül Kömürü |
+
+Orijinal dört renk önizlemede aynen gösterilir. Arayüzün menü/kart/form/tablo/düğme renkleri, seçili ve odak durumları, indirme çubuğu ve ana ekran manzarası paletten türetilir. Okunaklılık için açık/koyu tonlar kullanılır; metin ve düğme gradyanı kontrastları en az 4.5:1 olarak denetlenir. Türkçe/İngilizce adlar, kalıcı seçim ve klavye desteği vardır. Eski özel vurgu yeni paleti gizlemez; renk silinmez, ayrıca seçilerek kullanılabilir. Gün doğumu, Sunset, Sistem ve Yüksek kontrast kalır. Güncelleme mevcut tema tercihini değiştirmez.
 
 ## 0.6.2: görünüm Ayarlar altında
 
@@ -225,6 +237,7 @@ Testler:
 Microsoft uygulama kaydı/API izni sağlanmadığından gerçek Microsoft oturumu; kullanıcı adına Playit hesabı bağlanmadığından gerçek herkese açık tünel ve iki farklı ağdan oyun bağlantısı bu sürümde doğrulanmadı. Minecraft EULA onayı kullanıcıya bırakıldı. Tünel/kota API senaryoları taklit servisle test edildi. Bütün eski Minecraft sürümleri veya tüm mod kombinasyonları tek tek denenmedi.
 
 Bağımsız projedir; Mojang/Microsoft ile bağlantısı veya resmî onayı yoktur. Minecraft varlıkları ve modlar dağıtım paketine dahil edilmez; ilgili kaynaklardan indirilir. Kullanılan açık kaynak bileşenlerinin lisansları `third-party` klasöründedir. Qt/PySide DLL'leri dinamik olarak yüklenir; kaynak kodu ve yeniden derleme betiği pakete dahildir.
+
 
 
 

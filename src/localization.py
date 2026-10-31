@@ -401,6 +401,23 @@ Toplam|Total
 Kuyruk|Queue
 '''.strip().splitlines())
 CATALOG.update(dict(line.split('|',1) for line in '''
+Renk paletleri|Color palettes
+Bir karta tıklayınca tema hemen uygulanır ve kaydedilir.|Click a card to apply and save its theme immediately.
+Gece Leylağı|Midnight Lilac
+Ahududu|Raspberry
+Zeytin Bahçesi|Olive Garden
+Pastel Toprak|Pastel Earth
+Mercan Nane|Coral Mint
+Tropik Gün Batımı|Tropical Sunset
+Köz Gecesi|Ember Night
+Şeftali Kreması|Peach Cream
+Gül Kömürü|Rose Charcoal
+Görseldeki paletler|Palettes from your reference
+Soldan sağa, yukarıdan aşağıya. Bir karta tıklayınca tema hemen uygulanır.|Left to right, top to bottom. Click a card to apply its theme immediately.
+Palet renkleri menülere, kartlara, düğmelere ve ana ekran manzarasına uygulanır. Özel vurgu rengini ayrıca seçebilirsin.|Palette colors apply to menus, cards, buttons and the home landscape. You can also choose a custom accent.
+Hazır temalardan veya aşağıdaki dokuz paletten birini seç. Yazı ve kontrolleri birlikte ölçekle.|Choose a built-in theme or one of the nine palettes below. Scale text and controls together.
+Vurgu rengini seç|Choose accent color
+Paletin varsayılan vurgusu|Palette default accent
 Genel|General
 Ayarlar · Görünüm|Settings · Appearance
 Oyun, hesap ve görünüm ayarlarını buradan yönet.|Manage game, account and appearance settings here.

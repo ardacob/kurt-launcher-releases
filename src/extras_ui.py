@@ -11,7 +11,7 @@ from PySide6.QtGui import QColor, QIcon
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QCheckBox, QSpinBox, QLineEdit, QTableWidget, QTableWidgetItem, QHeaderView,
     QAbstractItemView, QTabWidget, QFormLayout, QFileDialog, QMessageBox, QInputDialog,
-    QDialog, QPlainTextEdit, QColorDialog, QScrollArea, QFrame)
+    QDialog, QPlainTextEdit, QColorDialog, QScrollArea, QFrame, QGridLayout)
 from core import APP_VERSION, LauncherError, Task, atomic_json, read_json
 from snapshots import digest
 from packs import Packs, ModUpdates
@@ -450,12 +450,25 @@ class Enhancements:
         body=QWidget();box=QVBoxLayout(body)
         box.setContentsMargins(18,18,18,18);box.setSpacing(14)
         self.appearance_page.setWidget(body);self.settings_tabs.addTab(self.appearance_page,'Görünüm')
-        box.addWidget(text("Açık, sunset, sistem veya yüksek kontrast görünümünü seç. Yazı ve kontrolleri birlikte ölçekle."))
+        box.addWidget(text("Hazır temalardan veya aşağıdaki dokuz paletten birini seç. Yazı ve kontrolleri birlikte ölçekle."))
         self.theme_choice=QComboBox()
         for title,value in (('Açık · Gün doğumu','light'),('Koyu · Sunset','sunset'),('Sistem teması','system'),('Yüksek kontrast','contrast')):
             self.theme_choice.addItem(title,value)
+        from appearance import PALETTE_THEMES
+        from theme_ui import ThemeCard
+        for key,title,*_ in PALETTE_THEMES:self.theme_choice.addItem(title,key)
         self.theme_choice.setCurrentIndex(max(0,self.theme_choice.findData(self.store.settings.get('theme','light'))))
         box.addWidget(self.theme_choice)
+        heading=text('Renk paletleri');heading.setObjectName('cardTitle');box.addWidget(heading)
+        box.addWidget(text('Bir karta tıklayınca tema hemen uygulanır ve kaydedilir.'))
+        grid=QGridLayout();grid.setSpacing(10);self.theme_cards={}
+        for i,(key,title,swatches,*_) in enumerate(PALETTE_THEMES):
+            card=self.action(ThemeCard(key,title,swatches));card.setChecked(key==self.store.settings.get('theme'))
+            card.clicked.connect(lambda checked=False,key=key:self.choose_palette_theme(key))
+            self.theme_cards[key]=card;grid.addWidget(card,i//3,i%3)
+        for column in range(3):grid.setColumnStretch(column,1)
+        box.addLayout(grid)
+        box.addWidget(text('Palet renkleri menülere, kartlara, düğmelere ve ana ekran manzarasına uygulanır. Özel vurgu rengini ayrıca seçebilirsin.'))
         self.language_choice=QComboBox();self.language_choice.addItem('Türkçe','tr');self.language_choice.addItem('English','en')
         self.language_choice.setCurrentIndex(max(0,self.language_choice.findData(self.store.settings.get('language','tr'))));box.addWidget(self.language_choice)
         self.interface_scale=QSpinBox();self.interface_scale.setRange(90,140);self.interface_scale.setSingleStep(10);self.interface_scale.setSuffix(' %')
@@ -463,8 +476,8 @@ class Enhancements:
         self.tools_button('Görünümü ve dili uygula',self.save_interface,box)
         box.addWidget(text('Kısayollar: Ctrl+1 Oyun merkezi · Ctrl+2 Modlar · Ctrl+3 Dünyalar · Ctrl+, Ayarlar · F6 Profil seç · Ctrl+Enter Oyna. Tab ile kontroller arasında ilerle.'))
         row = QHBoxLayout()
-        self.tools_button("Sunset vurgu rengini seç", self.pick_accent, row)
-        self.tools_button("Varsayılan sunset", self.reset_accent, row)
+        self.tools_button("Vurgu rengini seç", self.pick_accent, row)
+        self.tools_button("Paletin varsayılan vurgusu", self.reset_accent, row)
         box.addLayout(row)
         self.compact_mods = QCheckBox("Kompakt mod listesi")
         self.compact_mods.setChecked(self.store.settings.get("compact_mods", False))
@@ -481,11 +494,13 @@ class Enhancements:
         color = QColorDialog.getColor(QColor(self.store.settings.get("accent", "#ffb875")), self, "Vurgu rengi")
         if color.isValid():
             self.store.settings["accent"] = color.name()
+            self.store.settings['use_custom_accent']=True
             self.store.save()
             self.apply_appearance()
 
     def reset_accent(self):
         self.store.settings.pop("accent", None)
+        self.store.settings.pop('use_custom_accent',None)
         self.store.save()
         self.apply_appearance()
 
@@ -495,7 +510,14 @@ class Enhancements:
         if hasattr(self,'localization'):self.localization.refresh()
 
     def save_interface(self):
+        if self.theme_choice.currentData()!=self.store.settings.get('theme','light'):
+            self.store.settings['use_custom_accent']=False
         self.store.settings.update(theme=self.theme_choice.currentData(),language=self.language_choice.currentData(),ui_scale=self.interface_scale.value())
+        self.store.save();self.apply_appearance()
+
+    def choose_palette_theme(self,key):
+        self.theme_choice.setCurrentIndex(self.theme_choice.findData(key))
+        self.store.settings.update(theme=key,use_custom_accent=False)
         self.store.save();self.apply_appearance()
 
     def save_compact(self):

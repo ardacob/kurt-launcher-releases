@@ -119,7 +119,9 @@ def main():
             assert window.settings_tabs.count() == 2
             assert window.settings_tabs.widget(1) is window.appearance_page
             assert window.management_tabs.count() == 6
-            assert window.property('visual_theme') in ('light','sunset','contrast')
+            from appearance import PALETTES
+            assert window.property('visual_theme') in PALETTES
+            assert len(window.theme_cards)==9
             from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
             assert Ed25519PublicKey.from_public_bytes(window.updater.public_key)
             helper = assets / "playit/playitd.exe"

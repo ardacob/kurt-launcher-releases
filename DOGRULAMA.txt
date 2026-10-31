@@ -1,3 +1,15 @@
+Kurt Launcher 0.6.3 — referans paletlerinden dokuz isimli tema
+
+256 uygulama testi: 255 geçti, yerelde symlink yetkisi olmayan 1 senaryo
+atlandı. Paletlerin metin ve gradyan kontrastları en az 4.5:1; dokuz kart
+ayrı tema kimliğiyle seçilir ve diske kaydedilir. Eski özel vurgu renkleri
+paleti gizlemez ve silinmez. İngilizce adlar, klavye ile kart etkinleştirme
+ve her tema için farklı manzara çizimi doğrulandı. Tema kaynak renkleri
+kullanıcının referans görselinin dört düz bandından alındı. Windows palet
+kartları görsel olarak incelendi. CI ayrıca 9 yayın testi, gerçek EXE
+başlangıcı, imzalama ve yerinde yeniden açılış kontrolünü çalıştırır.
+
+Önceki sürüm doğrulamaları:
 Kurt Launcher 0.6.2 — Görünüm Ayarlar altında
 
 Mevcut arayüz kontrolleri tema seçeneklerinin Ayarlar sayfasında bulunduğunu,
@@ -244,6 +256,7 @@ TAMAMLANMASI DIŞ HESAP/ORTAM GEREKTİREN DOĞRULAMALAR
 Önceki 0.3.x gerçek Minecraft 1.20.1 / Fabric / Java 17 kurulumları ve
 Playit yerel IPC denemeleri geçmiş doğrulamalardır; 0.4.0'da gerçek oyun
 başlatma veya gerçek internet tüneli denenmiş gibi değerlendirilmemelidir.
+
 
 
 
