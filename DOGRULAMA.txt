@@ -1,3 +1,30 @@
+Kurt Launcher 0.5.0 — sekiz içerik/yönetim özelliği, 31 Ekim 2026
+
+224 uygulama + 9 yayın testi. Yerel symlink oluşturma izni olmayan tek
+senaryo atlanır; Windows dünya session.lock senaryosu çalışır.
+
+Yeni doğrulamalar:
+- HTTP Range/If-Range, kesinti/iptal sonrası devam, Range yok sayılması,
+  yanlış aralık/hash/ZIP, duraklatma/iptal, hız sınırı ve tamamlanmış önbellek.
+- Doku paketi ZIP/pack.mcmeta doğrulama, sıralama ve diğer ayarları koruma.
+- Shader favorileri ve güncellemeleri; değişmiş yerel dosyayı koruma,
+  kayıt hatasında eski ZIP ve kayda geri dönme.
+- Dünya gzip NBT bilgisini salt okunur çıkarma; yedek/geri yükleme öncesi
+  yeni yedek, kopyalama, dışa aktarım, bozuk yedekte dünya koruma.
+- Dünyalı/dünyasız profil kopyalama, büyük/küçük harfli saves dışlama,
+  kayıt yazma hatasında eksik profili yayımlamama, oyun/dünya kilitleri.
+- Ayrı dünyasız mod testinde bağımlılık kapatmadan adayları daraltma.
+- Depolama temizliğinde dünya/yedek yollarını reddetme ve değişen önbelleği koruma.
+- Yeni sayfa rotaları, dünya/ZIP/profil işlemleri, indirme kontrolleri,
+  seçimsiz temizlemeyi engelleme ve modpack'i ilk profil öncesi arama.
+
+Canlı ve yalıtılmış test: Fresh Animations 1.11.1 doku paketi, Fabulously
+Optimized 14.1.1 (26.2/Fabric) 49 modlu tam kurulum, yerel HTTP bağlantısı
+kesilince bytes=131072- isteğiyle devam ve son SHA-512 eşleşmesi.
+Gerçek kullanıcı arşivi bu testlerde kullanılmadı/değiştirilmedi.
+
+Önceki doğrulama kaydı:
+------------------------------------------------------------
 Kurt Launcher 0.4.9 — Shaderpack atölyesi, 31 Ekim 2026
 
 0.4.9: PyInstaller yeniden başlatmasında bağımsız çalışma ortamı zorlanır.

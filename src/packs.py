@@ -43,53 +43,22 @@ def download_file(api, record, target, task):
         raise LauncherError("Dosyanın SHA-512 kaydı veya indirme adresi eksik.")
     for url in urls:
         allowed_url(url)
-    task.status("İndiriliyor: " + target.name)
-    task.begin_bytes(record.get("fileSize", 0))
-    temporary = target.with_name(target.name + ".download")
+    from downloads import download
+    cache = getattr(api, 'download_cache', None)
+    if not isinstance(cache, (str, os.PathLike)):
+        cache = target.parent / '.kurt-downloads'
     last = None
-    try:
-        for url in urls:
-            task.check()
-            try:
-                for _ in range(6):
-                    response = api.session.get(allowed_url(url), stream=True, timeout=(15, 45), allow_redirects=False)
-                    if response.is_redirect:
-                        from urllib.parse import urljoin
-                        url = urljoin(url, response.headers["Location"])
-                        response.close()
-                        continue
-                    break
-                else:
-                    raise LauncherError("İndirmede çok fazla yönlendirme var.")
-                with response:
-                    response.raise_for_status()
-                    total = int(response.headers.get("Content-Length", 0))
-                    if total > PACK_LIMIT:
-                        raise LauncherError("Paket dosyası çok büyük.")
-                    task.begin_bytes(record.get("fileSize") or total)
-                    actual = hashlib.sha512()
-                    size = 0
-                    target.parent.mkdir(parents=True, exist_ok=True)
-                    with temporary.open("wb") as stream:
-                        for chunk in response.iter_content(128 * 1024):
-                            task.check()
-                            size += len(chunk)
-                            if size > PACK_LIMIT or (record.get("fileSize") and size > record["fileSize"]):
-                                raise LauncherError("İndirilen dosya beklenen boyutu aşıyor.")
-                            stream.write(chunk)
-                            actual.update(chunk)
-                            task.progress(size)
-                    if actual.hexdigest() != expected.lower() or (record.get("fileSize") and size != record["fileSize"]):
-                        raise LauncherError("Paket dosyası doğrulanamadı: " + target.name)
-                    if target.suffix.lower() == ".jar":
-                        validate_jar(temporary)
-                    os.replace(temporary, target)
-                    return
-            except requests.RequestException as exc:
-                last = exc
-        raise LauncherError("Paket dosyası indirilemedi. İnterneti kontrol edip tekrar deneyin.") from last
-    finally:
-        temporary.unlink(missing_ok=True)
+    for url in urls:
+        task.check()
+        try:
+            return download(api.session, url, target, task,
+                cache=cache,
+                expected=expected, size=record.get('fileSize', 0),
+                validator=validate_jar if target.suffix.lower() == '.jar' else None,
+                allow_url=allowed_url, limit=PACK_LIMIT)
+        except LauncherError as exc:
+            last = exc
+    raise last
 
 
 def lock_entry(version, file):
@@ -182,6 +151,7 @@ class Packs:
         stage = Path(tempfile.mkdtemp(prefix=".pack-", dir=parent))
         profile = {"id": uuid.uuid4().hex, "name": info["name"] or "Mod paketi", "version": info["version"],
                    "loader": info["loader"], "loader_version": info["loader_version"], "installed": None}
+        profile['modpack'] = {'name':info['name'], 'source_sha512':info['source_hash']}
         lock = {}
         destination = parent / profile["id"]
         try:
@@ -216,9 +186,16 @@ class Packs:
                     # Valid third-party/override JARs remain local, explicitly unverified mods.
                     pass
                 else:
-                    if not self.launcher.mods.compatible(version, profile):
+                    if profile['loader'] not in version.get('loaders', []):
                         raise LauncherError("Pakette profile uyumsuz bir mod var: " + path.name)
-                    lock[version["project_id"]] = lock_entry(version, path.name)
+                    entry = lock_entry(version, path.name)
+                    entry['pinned'] = True
+                    entry['pack_managed'] = True
+                    if (profile['version'] not in version.get('game_versions', [])
+                            or version.get('client_side') == 'unsupported'
+                            or version.get('environment') in ('server_only','dedicated_server_only')):
+                        entry['pack_compatibility_note'] = 'Paket yapımcısının sabit seçimi; tekil modun oyun/ortam etiketi paket tanımından farklı.'
+                    lock[version["project_id"]] = entry
             task.check()
             atomic_json(stage / "mods.lock.json", lock)
             stage.rename(destination)

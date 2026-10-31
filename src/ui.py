@@ -21,6 +21,8 @@ from servers import ServerManager
 from invites import PlayitManager, decode_invite
 from extras_ui import Enhancements
 from shader_ui import ShaderWorkshop
+from workshop_ui import ContentWorkshops
+from management_ui import Management
 from data_paths import DataLocationError, remember_data_folder, selected_data_folder
 
 CATEGORY_NAMES = {
@@ -260,7 +262,7 @@ class Worker(QRunnable):
             self.signals.error.emit(messages.get(name, f"İşlem tamamlanamadı ({name}). Bağlantıyı, dosya izinlerini ve ayarları kontrol edin."))
 
 
-class Window(ShaderWorkshop, Enhancements, QMainWindow):
+class Window(Management, ContentWorkshops, ShaderWorkshop, Enhancements, QMainWindow):
     def __init__(self, data_root=None, autostart=True):
         super().__init__()
         self.store = Store(data_root)
@@ -311,6 +313,8 @@ class Window(ShaderWorkshop, Enhancements, QMainWindow):
         self.build_footer(column)
         self.build_tools()
         self.build_shaders()
+        self.build_content_workshops()
+        self.build_management()
         self.reload_profiles()
         self.refresh_account()
         self.reload_servers()
@@ -349,18 +353,27 @@ class Window(ShaderWorkshop, Enhancements, QMainWindow):
         layout.addSpacing(20)
         layout.addWidget(label("OYUN ALANI", "sectionLabel"))
         self.nav = []
-        for index, text in enumerate(["◈    Oyun merkezi", "⊞    Mod atölyesi", "⚙    Ayarlar", "≡    Günlük", "◇    Sunucular", "▣    Kütüphane", "☀    Shaderpack’ler"]):
+        for index, text in enumerate(["◈    Oyun merkezi", "⊞    Mod atölyesi", "⚙    Ayarlar", "≡    Günlük", "◇    Sunucular", "▣    Kütüphane", "☀    Shaderpack’ler", "▧    Doku paketleri", "▦    Modpack’ler", "▣    Dünyalarım"]):
             item = button(text, lambda checked=False, i=index: self.navigate(i), "nav")
             item.setCheckable(True)
             item.setChecked(index==0)
             item.setProperty("page_index", index)
             self.nav.append(item)
         self.main_navigation = QVBoxLayout()
-        self.main_navigation.setSpacing(4)
-        for index in (0, 1, 6, 5, 4):
+        self.main_navigation.setSpacing(3)
+        self.main_navigation.setContentsMargins(0,0,0,0)
+        for index in (0, 1, 7, 6, 8, 9, 5, 4):
+            self.nav[index].setStyleSheet('padding: 6px 10px; font-size: 12px;')
             self.main_navigation.addWidget(self.nav[index])
-        layout.addLayout(self.main_navigation)
-        layout.addStretch(1)
+        navigation_body = QWidget()
+        navigation_body.setLayout(self.main_navigation)
+        navigation_scroll = QScrollArea()
+        navigation_scroll.setWidgetResizable(True)
+        navigation_scroll.setMinimumHeight(100)
+        navigation_scroll.setFrameShape(QFrame.NoFrame)
+        navigation_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        navigation_scroll.setWidget(navigation_body)
+        layout.addWidget(navigation_scroll, 1)
         divider = QFrame()
         divider.setObjectName("sidebarDivider")
         layout.addWidget(divider)
@@ -643,6 +656,9 @@ class Window(ShaderWorkshop, Enhancements, QMainWindow):
         self.cancel = button("İptal",self.cancel_job)
         self.cancel.hide()
         row.addWidget(self.cancel)
+        self.pause_download = button('Duraklat', self.toggle_download_pause)
+        self.pause_download.hide()
+        row.addWidget(self.pause_download)
         box.addLayout(row)
         self.progress = QProgressBar()
         self.progress.setTextVisible(False)
@@ -982,7 +998,7 @@ class Window(ShaderWorkshop, Enhancements, QMainWindow):
 
     def navigate(self,index):
         self.pages.setCurrentIndex(index)
-        self.breadcrumb.setText(["OYUN MERKEZİ","MOD ATÖLYESİ","AYARLAR","İŞLEM GÜNLÜĞÜ","SUNUCULAR","KÜTÜPHANE VE ARAÇLAR","SHADERPACK ATÖLYESİ"][index])
+        self.breadcrumb.setText(["OYUN MERKEZİ","MOD ATÖLYESİ","AYARLAR","İŞLEM GÜNLÜĞÜ","SUNUCULAR","KÜTÜPHANE VE ARAÇLAR","SHADERPACK ATÖLYESİ","DOKU PAKETİ ATÖLYESİ","MODPACK KATALOĞU","DÜNYALARIM"][index])
         for i,item in enumerate(self.nav):
             item.setChecked(i==index)
         self.sync_sidebar_selection()
@@ -996,6 +1012,13 @@ class Window(ShaderWorkshop, Enhancements, QMainWindow):
             self.refresh_shaders()
             if self.autostart and self.profile and not self.worker and self.shader_query_state is None:
                 self.search_shaders()
+        if index in (7,8):
+            catalog = self.resource_catalog if index == 7 else self.modpacks_catalog_widget
+            if index == 7: self.refresh_resources()
+            if self.autostart and not self.worker and catalog.query_state is None and (self.profile or index == 8):
+                catalog.search()
+        if index == 9 and self.autostart and self.profile and not self.worker:
+            self.refresh_worlds()
 
     def log(self,message):
         from datetime import datetime
@@ -1010,6 +1033,8 @@ class Window(ShaderWorkshop, Enhancements, QMainWindow):
         self.status.setText(title)
         self.worker = Worker(function)
         worker = self.worker
+        worker.task.rate_limit = max(0, int(self.store.settings.get('download_limit_kib',0))) * 1024
+        worker.task.download_cache = self.store.root / 'cache/downloads'
         def success(result):
             self.end_job()
             if done:
@@ -1021,6 +1046,8 @@ class Window(ShaderWorkshop, Enhancements, QMainWindow):
                 self.report(result)
             self.refresh_mods()
             self.refresh_shaders()
+            self.refresh_resources()
+            self.refresh_diagnostics()
             self.refresh_account()
         worker.signals.done.connect(success)
         worker.signals.error.connect(self.job_error)
@@ -1041,6 +1068,7 @@ class Window(ShaderWorkshop, Enhancements, QMainWindow):
     def end_job(self, state="completed"):
         self.worker = None
         self.cancel.hide()
+        self.pause_download.hide()
         self.progress.setRange(0,1000)
         if state == "completed":
             self._progress_known, self._progress_position = True, 1000
@@ -1054,6 +1082,8 @@ class Window(ShaderWorkshop, Enhancements, QMainWindow):
         self.profiles.setEnabled(True)
         self.search_input.setEnabled(True)
         self.refresh_shaders()
+        self.refresh_resources()
+        self.refresh_diagnostics()
 
     def job_error(self,message):
         self.close_after_server = False
@@ -1071,8 +1101,15 @@ class Window(ShaderWorkshop, Enhancements, QMainWindow):
         self.log(message)
 
     def refresh_transfer_stats(self):
+        active = bool(self.worker and self.worker.task.transfer.unit == 'bytes')
+        self.pause_download.setVisible(active)
+        self.pause_download.setText('Devam et' if active and self.worker.task.paused.is_set() else 'Duraklat')
+        if hasattr(self,'downloads_pause'):
+            self.downloads_pause.setEnabled(active)
+            self.downloads_pause.setText(self.pause_download.text())
         if self.worker:
             self.transfer_detail.setText(self.worker.task.transfer.text())
+            if self.worker.task.paused.is_set(): self.transfer_detail.setText('Duraklatıldı • '+self.transfer_detail.text())
         else:
             self.transfer_detail.setText("")
         if hasattr(self, "downloads_text"):
@@ -1107,7 +1144,22 @@ class Window(ShaderWorkshop, Enhancements, QMainWindow):
             self.cancel.setEnabled(False)
             self.cancel.setText("Bekleniyor…")
             self.progress_value.setText("İptal bekleniyor…")
-            self.status.setText("İptal bekleniyor… Mevcut ağ isteğinin bitmesi gerekebilir.")
+            self.status.setText("İptal bekleniyor… Mevcut dosya veya ağ işleminin bitmesi gerekebilir.")
+
+    def toggle_download_pause(self):
+        import time
+        if not self.worker or self.worker.task.transfer.unit != 'bytes': return
+        task=self.worker.task
+        if task.paused.is_set():
+            task.transfer.started += max(0,time.monotonic()-getattr(task,'paused_at',time.monotonic()))
+            task.paused.clear()
+        else:
+            task.paused_at=time.monotonic();task.paused.set()
+        self.refresh_transfer_stats()
+
+    def save_download_limit(self,value):
+        self.store.settings['download_limit_kib']=value;self.store.save()
+        if self.worker:self.worker.task.rate_limit=max(0,value)*1024
 
     def refresh_versions(self):
         self.run_job("Resmî Minecraft sürümleri alınıyor…",lambda task:self.launcher.versions(),self.loaded_versions)
@@ -1183,6 +1235,13 @@ class Window(ShaderWorkshop, Enhancements, QMainWindow):
         self.shader_offset = self.shader_total = 0
         self.shader_search_count.setText('Minecraft sürümüne ve shader desteğine göre filtrelenir.')
         self.refresh_shaders()
+        self.refresh_resources()
+        self.refresh_diagnostics()
+        if hasattr(self,'resource_catalog'):
+            for catalog in (self.resource_catalog,self.modpacks_catalog_widget):
+                catalog.query_state=None;catalog.offset=0;catalog.total=0;catalog.table.setRowCount(0)
+        if hasattr(self,'world_table'):
+            self.world_table.setRowCount(0);self.world_rows=[];self.world_backup_choice.clear()
         if hasattr(self, "tools_tabs"):
             self.update_rows = []
             self.updates_table.setRowCount(0)
@@ -1213,11 +1272,12 @@ class Window(ShaderWorkshop, Enhancements, QMainWindow):
             self.installed.setItem(i,1,QTableWidgetItem(entry.get("version_number") or "—"))
             if entry.get("game_versions") and entry.get("loaders"):
                 matches = p["version"] in entry["game_versions"] and p["loader"] in entry["loaders"]
-                compatibility = "Uyumlu" if matches else "Uyumsuz"
+                compatibility = "Paket seçimi" if entry.get('pack_compatibility_note') else "Uyumlu" if matches else "Uyumsuz"
             else:
                 compatibility = "Bilinmiyor"
             item = QTableWidgetItem(compatibility)
             item.setToolTip("Minecraft: " + ", ".join(entry.get("game_versions", [])) + "\nYükleyici: " + ", ".join(entry.get("loaders", [])) if entry else "Yerel JAR sürümü ve bağımlılıkları elle kontrol edilmeli.")
+            if entry.get('pack_compatibility_note'): item.setToolTip(item.toolTip()+'\n'+entry['pack_compatibility_note'])
             self.installed.setItem(i,2,item)
             self.installed.setItem(i,3,QTableWidgetItem("Kapalı" if name.endswith(".disabled") else "Etkin"))
         self.mod_count.setText(f"{sum(not n.endswith('.disabled') for n in files)} etkin mod")

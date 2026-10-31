@@ -170,6 +170,20 @@ class Features(unittest.TestCase):
         with patch("packs.download_file", side_effect=download), self.assertRaises(LauncherError): self.packs.import_pack(source, Task())
         self.assertEqual(len(self.store.profiles), 1)
 
+    def test_curated_pack_keeps_pinned_versions_and_reports_cross_loader_metadata(self):
+        source=self.pack()
+        self.launcher.versions=lambda:({'versions':[{'id':'1.20.1'}]},False)
+        selected=version('test');selected['environment']='server_only'
+        selected['dependencies']=[dep('missing-other-loader')]
+        self.packs.api.get=Mock(return_value=selected)
+        def download(api,record,target,task):
+            target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(jar_bytes())
+        with patch('packs.download_file',side_effect=download):profile=self.packs.import_pack(source,Task())
+        entry=next(iter(self.store.mod_lock(profile).values()))
+        self.assertTrue(entry['pinned']);self.assertTrue(entry['pack_managed'])
+        self.assertIn('pack_compatibility_note',entry)
+        self.launcher.mods.validate_enabled(profile)
+
     def test_export_contains_metadata_not_mod_binaries_or_world(self):
         v = version("test")
         self.launcher.api = FakeApi([v])

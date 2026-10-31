@@ -44,6 +44,10 @@ class ShaderWorkshop:
         for item in (self.shader_discover_tab, self.shader_installed_tab):
             item.setCheckable(True)
             row.addWidget(item)
+        self.shader_favorites_button = button('★ Favoriler', self.search_shaders)
+        self.shader_favorites_button.setCheckable(True)
+        row.addWidget(self.shader_favorites_button)
+        row.addWidget(button('Güncellemeleri bul', self.scan_shader_updates))
         self.shader_discover_tab.setChecked(True)
         row.addStretch()
         layout.addLayout(row)
@@ -164,8 +168,8 @@ class ShaderWorkshop:
         for project, (button, version_id) in self.shader_catalog_buttons.items():
             record = records.get(project)
             present = bool(record and (folder / record.get('file', '')).is_file())
-            button.setText('✓ İndirildi' if present else 'Kayıt var • kaldırıp tekrar indir' if record else '↓ İndir')
-            button.setEnabled(not self.worker and bool(version_id) and not record)
+            button.setText('✓ İndirildi' if present else '↓ Yeniden indir' if record else '↓ İndir')
+            button.setEnabled(not self.worker and bool(version_id) and not present)
 
     def shader_filter_changed(self):
         self.shader_offset = 0
@@ -179,12 +183,13 @@ class ShaderWorkshop:
         try:
             p = self.require_profile()
             query, sort, engine = self.shader_search_input.text().strip(), self.shader_sort.currentData(), self.shader_engine.currentData()
-            state = (p['id'], query, sort, engine)
+            favorites = self.shader_favorites_button.isChecked()
+            state = (p['id'], query, sort, engine, favorites)
             if state != self.shader_query_state:
                 offset = 0
             self.shader_query_state = state
             self.run_job('Shaderpack’ler aranıyor…',
-                lambda task: self.launcher.shaders.catalog(p, query, offset, task, sort=sort, engine=engine),
+                lambda task: self.launcher.shaders.catalog(p, query, offset, task, sort=sort, engine=engine, **({'favorites':True} if favorites else {})),
                 lambda result: self.show_shader_results(result, offset))
         except LauncherError as exc:
             self.report(str(exc))
@@ -226,6 +231,9 @@ class ShaderWorkshop:
             else:
                 content.addWidget(shader_text(hit.get('version_error', 'Uyumlu sürüm doğrulanamadı.')))
             actions = QHBoxLayout()
+            star = button('★ Kaydedildi' if hit['project_id'] in self.launcher.shaders.favorites() else '☆ Kaydet', lambda: None)
+            star.clicked.connect(lambda checked=False, h=hit, b=star: self.favorite_shader(h, b))
+            actions.addWidget(star)
             actions.addWidget(button('Ayrıntılar ve görseller ↗', lambda checked=False, pid=hit['project_id']: QDesktopServices.openUrl(QUrl('https://modrinth.com/shader/' + pid))))
             actions.addStretch()
             version_id = info.get('id') if info else None
@@ -283,3 +291,51 @@ class ShaderWorkshop:
             self.open_path(self.launcher.shaders.folder(self.require_profile()))
         except LauncherError as exc:
             self.report(str(exc))
+
+    def favorite_shader(self, hit, button):
+        if self.worker: return
+        saved = self.launcher.shaders.favorite(hit)
+        button.setText('★ Kaydedildi' if saved else '☆ Kaydet')
+
+    def scan_shader_updates(self):
+        if self.worker: return
+        try:
+            profile = self.require_profile()
+            self.run_job('Shader güncellemeleri aranıyor…', lambda task:self.launcher.shaders.updates(profile, task),
+                         lambda rows:self.show_shader_updates(profile, rows))
+        except LauncherError as exc: self.report(str(exc))
+
+    def show_shader_updates(self, profile, rows):
+        from PySide6.QtWidgets import QDialog, QPlainTextEdit
+        from ui import button
+        dialog = QDialog(self); dialog.setWindowTitle('Shaderpack güncellemeleri'); dialog.resize(850, 550)
+        box = QVBoxLayout(dialog)
+        box.addWidget(shader_text('Yerel/değiştirilmiş ZIP’ler otomatik değiştirilmez. Güncellemeden sonra paketi oyun içinden tekrar seçebilirsin.'))
+        table = QTableWidget(0, 3); table.setHorizontalHeaderLabels(['Shaderpack', 'Kurulu → Yeni', 'İşlem'])
+        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        changelog = QPlainTextEdit(); changelog.setReadOnly(True)
+        for index, row in enumerate(rows):
+            table.insertRow(index)
+            table.setItem(index, 0, QTableWidgetItem(row['name']))
+            info = row.get('new', {})
+            table.setItem(index, 1, QTableWidgetItem(row.get('error') or (row['old'].get('version_number', '—') + ' → ' + info.get('version_number', '—'))))
+            if info:
+                update = button('Güncelle', lambda checked=False, pid=row['project_id'], vid=info['id']:self.apply_shader_update(profile, pid, vid, dialog))
+                table.setCellWidget(index, 2, update)
+        def selected():
+            i = table.currentRow()
+            if 0 <= i < len(rows): changelog.setPlainText(rows[i].get('new', {}).get('changelog', 'Değişiklik açıklaması yok.'))
+        table.itemSelectionChanged.connect(selected)
+        box.addWidget(table); box.addWidget(changelog)
+        if not rows: box.addWidget(shader_text('Uyumlu yeni shaderpack sürümü bulunmadı.'))
+        box.addWidget(button('Kapat', dialog.accept))
+        self.shader_updates_dialog = dialog; dialog.open()
+
+    def apply_shader_update(self, profile, project, version_id, dialog):
+        if self.worker: return
+        try:
+            self.launcher.ensure_idle()
+            dialog.accept()
+            self.run_job('Shaderpack güncelleniyor…', lambda task:self.launcher.shaders.update(project, profile, version_id, task))
+        except LauncherError as exc: self.report(str(exc))

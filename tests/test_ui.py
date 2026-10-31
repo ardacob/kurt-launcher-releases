@@ -17,8 +17,8 @@ app=QApplication.instance() or QApplication([])
 
 class UiTests(unittest.TestCase):
     def test_sidebar_groups_keep_page_routes_and_settings_at_bottom(self):
-        order = [self.window.main_navigation.itemAt(i).widget().property("page_index") for i in range(5)]
-        self.assertEqual(order, [0,1,6,5,4])
+        order = [self.window.main_navigation.itemAt(i).widget().property("page_index") for i in range(8)]
+        self.assertEqual(order, [0,1,7,6,8,9,5,4])
         self.assertIs(self.window.utility_navigation.itemAt(2).widget(), self.window.nav[2])
         self.window.nav[2].click()
         self.assertEqual(self.window.pages.currentIndex(), 2)
@@ -180,7 +180,7 @@ class UiTests(unittest.TestCase):
         self.window.reload_profiles(p["id"])
         self.window.open_tools(0)
         self.assertEqual(self.window.pages.currentIndex(), 5)
-        self.assertEqual(self.window.tools_tabs.count(), 7)
+        self.assertEqual(self.window.tools_tabs.count(), 8)
         (self.window.store.directory(p) / "options.txt").write_text("music:0.5\n")
         self.window.make_backup()
         self.wait_job()
@@ -242,7 +242,8 @@ class UiTests(unittest.TestCase):
         self.appdata_patch.stop()
         self.temp.cleanup()
 
-    def wait_job(self, attempts=200):
+    def wait_job(self, attempts=800):
+        # Verified copies/backups can briefly wait on Windows filesystem filters.
         for i in range(attempts):
             QTest.qWait(10)
             if self.window.worker is None:
@@ -426,6 +427,65 @@ class UiTests(unittest.TestCase):
         self.assertIn("3–16",self.window.status.text())
         self.assertEqual(self.window.store.settings["offline_username"],"")
         self.assertEqual(self.window.pages.currentIndex(),0)
+
+    def test_new_catalogs_worlds_and_management_routes_are_reachable(self):
+        for index in (7,8,9):
+            self.window.nav[index].click();self.assertEqual(self.window.pages.currentIndex(),index)
+        self.window.open_tools(7);self.assertEqual(self.window.tools_tabs.currentIndex(),7)
+        self.assertEqual(self.window.tools_tabs.count(),8)
+
+    def test_resource_selection_order_is_written_from_the_ui(self):
+        from test_content import resource_bytes
+        from core import Task
+        from PySide6.QtCore import Qt
+        p=self.window.store.create('Test','1.20.1','vanilla');self.window.reload_profiles(p['id'])
+        source=Path(self.temp.name)/'test.zip';source.write_bytes(resource_bytes())
+        self.window.launcher.resources.before_change=lambda *args:None
+        self.window.launcher.resources.import_local(p,[source],Task());self.window.refresh_resources()
+        self.window.resource_table.item(0,0).setCheckState(Qt.Checked)
+        self.window.apply_resource_selection();self.wait_job()
+        self.assertEqual(self.window.launcher.resources.order(p),['test.zip'])
+
+    def test_world_ui_lists_metadata_and_creates_world_specific_backup(self):
+        from test_worlds_management import level_bytes
+        p=self.window.store.create('Test','1.20.1','fabric');self.window.reload_profiles(p['id'])
+        world=self.window.store.directory(p)/'saves/MyWorld';world.mkdir(parents=True);(world/'level.dat').write_bytes(level_bytes())
+        self.window.refresh_worlds();self.wait_job();self.assertEqual(self.window.world_table.rowCount(),1)
+        self.window.world_table.selectRow(0);self.window.backup_world();self.wait_job()
+        self.assertEqual(self.window.world_backup_choice.count(),1)
+        self.assertEqual(self.window.world_table.item(0,1).text(),'1.20.1')
+
+    def test_profile_copy_ui_creates_separate_profile_with_world_checkbox(self):
+        p=self.window.store.create('Original','1.20.1','fabric');self.window.reload_profiles(p['id'])
+        world=self.window.store.directory(p)/'saves/MyWorld';world.mkdir(parents=True);(world/'level.dat').write_bytes(b'world')
+        self.window.clone_name.setText('Copy');self.window.clone_worlds.setChecked(True)
+        self.window.clone_profile();self.wait_job()
+        self.assertNotEqual(self.window.profile['id'],p['id'])
+        self.assertEqual((self.window.store.directory(self.window.profile)/'saves/MyWorld/level.dat').read_bytes(),b'world')
+
+    def test_modpack_catalog_search_works_before_creating_a_profile(self):
+        from core import Task
+        catalog=self.window.modpacks_catalog_widget;catalog.query.setText('Optimized')
+        with patch.object(self.window,'run_job') as run,patch.object(self.window.modpack_catalog,'search',return_value={'hits':[],'total_hits':0}) as search:
+            catalog.search();run.assert_called_once();run.call_args.args[1](Task())
+        self.assertEqual(search.call_args.args[0],'Optimized')
+
+    def test_download_pause_resume_and_rate_limit_controls(self):
+        from ui import Worker
+        self.window.worker=Worker(lambda task:None);task=self.window.worker.task;task.begin_bytes(100)
+        self.window.toggle_download_pause();self.assertTrue(task.paused.is_set())
+        self.assertEqual(self.window.pause_download.text(),'Devam et')
+        self.window.save_download_limit(512);self.assertEqual(task.rate_limit,512*1024)
+        self.window.toggle_download_pause();self.assertFalse(task.paused.is_set())
+        self.window.worker=None
+
+    def test_storage_ui_requires_explicit_selection_before_cleaning(self):
+        cache=self.window.store.root/'cache/downloads/test.part';cache.parent.mkdir(parents=True);cache.write_bytes(b'cache')
+        self.window.scan_storage();self.wait_job()
+        self.assertEqual(self.window.storage_files.rowCount(),1)
+        with patch('management_ui.QMessageBox.question') as confirm:
+            self.window.clean_storage();confirm.assert_not_called()
+        self.assertTrue(cache.is_file())
 
     def test_shader_page_supports_vanilla_search_and_engine_sort_filters(self):
         from core import Task

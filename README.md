@@ -1,6 +1,19 @@
-# Kurt Launcher 0.4.9
+# Kurt Launcher 0.5.0
 
 [En yeni Windows sürümünü indir](https://github.com/ardacob/kurt-launcher-releases/releases/latest) · [Tüm sürümler](https://github.com/ardacob/kurt-launcher-releases/releases) · [Otomatik derleme](https://github.com/ardacob/kurt-launcher-releases/actions/workflows/release.yml)
+
+## 0.5.0: içerik, dünya ve profil yönetimi
+
+- **Doku paketleri:** Modrinth üzerinde görselli arama, popüler/yeni/güncellenen sıralaması, gerçek Minecraft sürümü kontrolü ve SHA-512 ile ZIP doğrulaması. Yerel ZIP ekleme, kaldırma ve seçili paketlerin sırasını options.txt içine kaydetme vardır. Listedeki son paket daha yüksek önceliklidir; bazı paketlerin ek mod gereksinimleri paket sayfasında açıklanır.
+- **Modpack’ler:** Hazır paketleri oyun/yükleyici filtresiyle keşfet, gerçek paket sürümünü seç, indirme boyutunu incele ve ayrı profile kur. Paket yapımcısının dosya sürümleri sabitlenir. Evrensel modların başka yükleyiciye ait bağımlılık/ortam etiketleri paket manifestinden farklı olabilir; bu seçimler tabloda açıkça gösterilir. Oyunun gerçek yükleyicisi çalışma zamanı gereksinimlerini değerlendirir.
+- **Dünyalarım:** Dünya adı, icon.png görseli, son Minecraft sürümü, son oynanma, tohum ve boyut bilgisi; dünyaya özel ZIP yedeği, geri yükleme, kopyalama ve dışa aktarım. Geri yükleme öncesi mevcut durumun ayrıca yedeği alınır. Dünya NBT verisi yalnız okunur; sürümü launcher tarafından dönüştürülmez. Kullanımdaki dünyalar değiştirilmez.
+- **Shader favorileri ve güncellemeler:** Shaderpack’ler sayfasından favorilere kaydet; uyumlu yeni sürümleri ve değişiklik açıklamasını görüp tek tek güncelle. Yerel/değiştirilmiş dosyalar üzerine yazılmaz; kayıt hatasında eski ZIP geri konur. Yeni dosya adını oyundan tekrar seçmek gerekebilir.
+- **İndirmeler:** Alt çubukta duraklat/devam et, İndirmeler penceresinde KiB/sn hız sınırı. Kesinti/iptal sonrasında Tekrar dene, doğrulanabilir dosyalarda HTTP Range destekleniyorsa aynı bayttan sürdürür. Sunucu aralığı yok sayarsa indirme güvenle yeniden başlar. Tamamlanmış doğrulanmış dosyalar da önbellekte tutulur; çok dosyalı işlem yeniden denendiğinde yeniden indirilmez. Modlar, paketler, launcher ve Minecraft/Java dosyaları ortak indirme altyapısını kullanır. Önbellek Depolama ekranından temizlenebilir.
+- **Kütüphane → Yönetim → Profil kopyala:** Modları, shader/doku paketlerini ve ayarları doğrulanmış ayrı profile kopyala; dünyaları dahil edip etmeyeceğini seç. Minecraft ve Java arşivi paylaşılır.
+- **Kütüphane → Yönetim → Mod sorunu bul:** Dünyasız bir test profili oluşturur. Bildirilen bağımlılıkları birlikte açık tutarak mod gruplarını daraltır. Testi çalıştırıp oyunu kapattıktan sonra sonucu kullanıcı belirtir. Asıl profil değişmez; mod etkileşimleri nedeniyle sonuç kesin teşhis değildir. Yerel modların bildirilmemiş bağımlılıkları tam belirlenemeyebilir.
+- **Kütüphane → Yönetim → Depolama:** Oyun, Java, modlar, dünyalar ve yedeklerin disk kullanımını gör. Yalnız seçilen yeniden indirilebilir önbellek dosyaları temizlenebilir; taramadan sonra değişen dosyalar korunur. Devam verisini temizlemek ilgili indirmenin yeniden başlamasını gerektirir.
+
+Yeni ana sayfalar kompakt sol menüde; Ayarlar, Günlük ve Güncellemeler altta kalır. Ücretli hizmet veya yeni hesap gerekmez. Java/Minecraft ve yayıncı imzası doğrulamaları korunur.
 
 ## 0.4.8: Shaderpack atölyesi
 

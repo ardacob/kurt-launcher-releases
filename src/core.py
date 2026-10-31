@@ -23,7 +23,7 @@ import requests
 import minecraft_launcher_lib as mc
 from data_paths import resolve_data_folder, remember_data_folder
 
-APP_VERSION = "0.4.9"
+APP_VERSION = "0.5.0"
 MANIFEST = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 MODRINTH = "https://api.modrinth.com/v2"
 LOADERS = ("vanilla", "fabric", "forge", "neoforge", "quilt")
@@ -91,6 +91,8 @@ def validate_jar(path: Path):
 class Task:
     def __init__(self, notify=lambda message, value, maximum: None):
         self.cancel = threading.Event()
+        self.paused = threading.Event()
+        self.rate_limit = 0
         self.notify = notify
         self.maximum = 0
         self.value = 0
@@ -102,6 +104,12 @@ class Task:
     def check(self):
         if self.cancel.is_set():
             raise Cancelled("İşlem iptal edildi.")
+
+    def wait_transfer(self):
+        self.check()
+        while self.paused.is_set():
+            if self.cancel.wait(.1):
+                self.check()
 
     def status(self, text):
         self.check()
@@ -215,26 +223,13 @@ class Api:
         expected = file.get("hashes", {}).get("sha512")
         if not expected:
             raise LauncherError("Dosya için SHA-512 doğrulaması bulunamadı.")
-        digest = hashlib.sha512()
-        size = 0
-        task.status("İndiriliyor: " + file["filename"])
-        task.begin_bytes(file.get("size", 0))
-        try:
-            with self.session.get(url, stream=True, timeout=(15, 45)) as response:
-                response.raise_for_status()
-                with target.open("wb") as output:
-                    for chunk in response.iter_content(128 * 1024):
-                        task.check()
-                        output.write(chunk)
-                        digest.update(chunk)
-                        size += len(chunk)
-                        task.progress(size)
-            if digest.hexdigest().lower() != expected.lower():
-                raise LauncherError("Dosya doğrulaması başarısız. Dosya kurulmadı.")
-            validator(target)
-        except Exception:
-            target.unlink(missing_ok=True)
-            raise
+        from downloads import download
+        def allowed(value):
+            if urlparse(value).scheme != 'https' or urlparse(value).hostname != 'cdn.modrinth.com':
+                raise LauncherError('İndirme adresi Modrinth CDN adresi değil.')
+        return download(self.session, url, target, task,
+                        cache=getattr(self, 'download_cache', target.parent / '.kurt-downloads'),
+                        expected=expected, size=file.get('size', 0), validator=validator, allow_url=allowed)
 
 
 class Store:
@@ -265,7 +260,13 @@ class Store:
     def directory(self, profile):
         if not re.fullmatch(r"[0-9a-f]{32}", profile["id"]):
             raise LauncherError("Geçersiz profil kimliği.")
-        directory = self.root / ("servers" if profile.get("kind") == "server" else "instances") / profile["id"]
+        parent = self.root / ("servers" if profile.get("kind") == "server" else "instances")
+        directory = parent / profile["id"]
+        for path in (parent, directory):
+            if path.is_symlink() or path.exists() and getattr(path.lstat(), 'st_file_attributes', 0) & 1024:
+                raise LauncherError('Profil klasörü bağlantı/junction olamaz.')
+        if not directory.resolve().is_relative_to(self.root):
+            raise LauncherError('Profil klasörü oyun arşivinin dışına çıkamaz.')
         directory.mkdir(parents=True, exist_ok=True)
         return directory
 
@@ -607,6 +608,11 @@ class ModManager:
                 continue
             for dep in entry.get("requires", []):
                 found = next((v for pid, v in lock.items() if pid == dep.get("project_id") or v["version_id"] == dep.get("version_id")), None)
+                # Curated mrpacks already pin their full client file set. Public
+                # dependency lists can include requirements for another loader
+                # of a universal JAR; the game loader evaluates those exactly.
+                if found is None and entry.get('pack_managed'):
+                    continue
                 if not found or not (directory / found["file"]).exists():
                     raise LauncherError("Eksik/kapalı bağımlılık: " + entry["name"])
 
@@ -690,6 +696,7 @@ class Account:
 class Launcher:
     def __init__(self, store):
         self.store, self.api = store, Api()
+        self.api.download_cache = store.root / 'cache/downloads'
         self.mods = ModManager(store, self.api)
         self.account = Account(store)
         self.process = None
@@ -701,6 +708,17 @@ class Launcher:
         from shaders import ShaderManager
         self.shaders = ShaderManager(store, self.api)
         self.shaders.before_change = self.snapshots.before_change
+        from content import ResourcePacks
+        from worlds import Worlds
+        from profile_data import ProfileCopies
+        from mod_diagnostics import ModDiagnostics
+        from storage import Storage
+        self.resources = ResourcePacks(store, self.api)
+        self.resources.before_change = self.snapshots.before_change
+        self.worlds = Worlds(self)
+        self.copies = ProfileCopies(self)
+        self.diagnostics = ModDiagnostics(self)
+        self.storage = Storage(self)
 
     def ensure_profile_idle(self, profile):
         if profile.get("kind") != "server":

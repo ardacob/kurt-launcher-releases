@@ -177,22 +177,9 @@ class Updater:
         directory = self.store.root / "updates"
         directory.mkdir(exist_ok=True)
         target = directory / ("release-" + uuid.uuid4().hex + ".kurtupdate")
-        task.status("Launcher güncellemesi indiriliyor…")
-        try:
-            with requests.get(url, stream=True, timeout=(15, 45)) as response:
-                response.raise_for_status()
-                task.begin_bytes(int(response.headers.get("Content-Length", 0)))
-                size = 0
-                with target.open("wb") as stream:
-                    for chunk in response.iter_content(128 * 1024):
-                        task.check()
-                        size += len(chunk)
-                        if size > 1024**3: raise LauncherError("Güncelleme indirmesi çok büyük.")
-                        stream.write(chunk)
-                        task.progress(size)
-            if digest(target) != expected:
-                raise LauncherError("İndirilen güncelleme doğrulanamadı.")
-            return str(target)
-        except Exception:
-            target.unlink(missing_ok=True)
-            raise
+        from downloads import download
+        def allowed(value):
+            if urlparse(value).scheme != 'https':
+                raise LauncherError('Güncelleme yalnız HTTPS üzerinden indirilebilir.')
+        return download(requests, url, target, task, cache=self.store.root / 'cache/downloads',
+                        expected=expected, allow_url=allowed, limit=1024**3)

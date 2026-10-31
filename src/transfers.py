@@ -22,44 +22,36 @@ def stream_library_file(task, url, path, callback=None, sha1=None, lzma_compress
     task.check()
     if path.is_file() and not overwrite and (sha1 is None or digest(path, "sha1") == sha1):
         return False
+    from downloads import download
+    cache = getattr(task, 'download_cache', (Path(minecraft_directory).parent / 'cache/downloads')
+                    if minecraft_directory else path.parent / '.kurt-downloads')
+    batch, queued = (task.maximum, task.value), task.transfer.queue
     path.parent.mkdir(parents=True, exist_ok=True)
-    batch = task.maximum, task.value
-    queued = task.transfer.queue
-    if batch[0] > 0:
-        task.transfer.queue = f"Dosya {min(batch[1]+1,batch[0]+1)}/{batch[0]+1}"
-    task.status("İndiriliyor: " + path.name)
-    fd, name = tempfile.mkstemp(prefix=".transfer-", dir=path.parent)
-    temporary = Path(name)
     try:
-        transport = session or requests
-        with transport.get(url, stream=True, timeout=(15, 60)) as response, os.fdopen(fd, "wb") as out:
-            fd = None
-            response.raise_for_status()
-            task.begin_bytes(int(response.headers.get("Content-Length", 0)))
-            decompress = lzma.LZMADecompressor() if lzma_compressed else None
-            actual = hashlib.sha1()
-            size = written = 0
-            for chunk in response.iter_content(128 * 1024):
+        if not lzma_compressed:
+            download(session or requests, url, path, task, cache=cache,
+                     expected=sha1, algorithm='sha1', limit=2 * 1024**3)
+        else:
+            with tempfile.TemporaryDirectory(prefix='.transfer-', dir=path.parent) as temporary:
+                compressed, expanded = Path(temporary) / 'input.xz', Path(temporary) / path.name
+                download(session or requests, url, compressed, task, cache=cache, limit=2 * 1024**3)
+                size, actual = 0, hashlib.sha1()
+                with lzma.open(compressed, 'rb') as inp, expanded.open('wb') as out:
+                    for block in iter(lambda: inp.read(1024 * 1024), b''):
+                        task.check()
+                        size += len(block)
+                        if size > 2 * 1024**3:
+                            raise LauncherError('Oyun dosyası boyut sınırını aşıyor.')
+                        out.write(block)
+                        actual.update(block)
+                if sha1 and actual.hexdigest() != sha1:
+                    raise LauncherError('Oyun dosyası doğrulanamadı: ' + path.name)
                 task.check()
-                size += len(chunk)
-                output = decompress.decompress(chunk) if decompress else chunk
-                written += len(output)
-                if written > 2 * 1024**3: raise LauncherError("Oyun dosyası boyut sınırını aşıyor.")
-                out.write(output)
-                actual.update(output)
-                task.progress(size)
-            if decompress and not decompress.eof:
-                raise LauncherError("Sıkıştırılmış oyun dosyası eksik.")
-            if sha1 and actual.hexdigest() != sha1:
-                raise LauncherError("Oyun dosyası doğrulanamadı: " + path.name)
-        task.check()
-        os.replace(temporary, path)
+                os.replace(expanded, path)
         return True
     finally:
-        if fd is not None: os.close(fd)
-        temporary.unlink(missing_ok=True)
         task.maximum, task.value = batch
-        task.transfer.begin(batch[0], "items")
+        task.transfer.begin(batch[0], 'items')
         task.transfer.queue = queued
 
 

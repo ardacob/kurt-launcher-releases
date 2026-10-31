@@ -104,7 +104,7 @@ def main():
             import hashlib
             import subprocess
             assert WinVaultKeyring
-            assert window.tools_tabs.count() == 7
+            assert window.tools_tabs.count() == 8
             from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
             assert Ed25519PublicKey.from_public_bytes(window.updater.public_key)
             helper = assets / "playit/playitd.exe"
@@ -115,7 +115,7 @@ def main():
             window.show()
             app.processEvents()
             window.grab().save(str(store.root / "smoke-test.png"))
-            (store.root / "smoke-test.ok").write_text("Qt + 7 tool tabs + Ed25519 update verification + Minecraft + Windows vault + signed Playit helper SHA256/--help OK",encoding="utf-8")
+            (store.root / "smoke-test.ok").write_text("Qt + 8 tool tabs + content/worlds/management + Ed25519 + Minecraft + Windows vault + signed Playit helper SHA256/--help OK",encoding="utf-8")
             window.close()
             QThreadPool.globalInstance().waitForDone()
             return 0

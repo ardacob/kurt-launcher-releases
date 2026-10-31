@@ -126,12 +126,13 @@ class TransferStats:
 
     def begin(self, total=0, unit="bytes"):
         self.started, self.current, self.total, self.unit = time.monotonic(), 0, total, unit
+        self.base = 0
 
     def text(self):
         if self.unit != "bytes":
             return self.queue
         elapsed = time.monotonic() - self.started
-        speed = self.current / elapsed if elapsed > .2 else 0
+        speed = max(0,self.current-getattr(self,'base',0)) / elapsed if elapsed > .2 else 0
         size = lambda n: f"{n / 1048576:.1f} MB"
         text = size(self.current) + (" / " + size(self.total) if self.total else " / boyut bilinmiyor")
         if speed > 0:
