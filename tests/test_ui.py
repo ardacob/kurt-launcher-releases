@@ -25,7 +25,7 @@ class UiTests(unittest.TestCase):
         self.assertTrue(self.window.nav[2].isChecked())
         self.window.sidebar_updates.click()
         self.assertEqual(self.window.pages.currentIndex(), 5)
-        self.assertEqual(self.window.tools_tabs.currentIndex(), 6)
+        self.assertIs(self.window.tools_tabs.currentWidget(), self.window.launcher_updates_page)
 
     def test_background_update_check_does_not_lock_game_controls(self):
         next_version = ".".join(APP_VERSION.split(".")[:2] + [str(int(APP_VERSION.split(".")[2]) + 1)])
@@ -180,7 +180,7 @@ class UiTests(unittest.TestCase):
         self.window.reload_profiles(p["id"])
         self.window.open_tools(0)
         self.assertEqual(self.window.pages.currentIndex(), 5)
-        self.assertEqual(self.window.tools_tabs.count(), 8)
+        self.assertEqual(self.window.tools_tabs.count(), 7)
         (self.window.store.directory(p) / "options.txt").write_text("music:0.5\n")
         self.window.make_backup()
         self.wait_job()
@@ -431,8 +431,9 @@ class UiTests(unittest.TestCase):
     def test_new_catalogs_worlds_and_management_routes_are_reachable(self):
         for index in (7,8,9):
             self.window.nav[index].click();self.assertEqual(self.window.pages.currentIndex(),index)
-        self.window.open_tools(7);self.assertEqual(self.window.tools_tabs.currentIndex(),7)
-        self.assertEqual(self.window.tools_tabs.count(),8)
+        self.window.open_tools(self.window.tools_tabs.indexOf(self.window.management_page))
+        self.assertIs(self.window.tools_tabs.currentWidget(),self.window.management_page)
+        self.assertEqual(self.window.tools_tabs.count(),7)
 
     def test_resource_selection_order_is_written_from_the_ui(self):
         from test_content import resource_bytes

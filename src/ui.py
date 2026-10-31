@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QPushButton, QComboBox, QLineEdit, QFrame, QStackedWidget, QScrollArea,
     QProgressBar, QFileDialog, QSpinBox, QFormLayout, QInputDialog,
     QPlainTextEdit, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
-    QCompleter, QMessageBox, QLayout, QDialog, QTextBrowser, QCheckBox,
+    QCompleter, QMessageBox, QLayout, QDialog, QTextBrowser, QCheckBox, QTabWidget,
 )
 
 from core import APP_VERSION, LOADERS, Launcher, LauncherError, Cancelled, Store, Task, offline_account
@@ -389,7 +389,7 @@ class Window(Journeys, Management, ContentWorkshops, ShaderWorkshop, Enhancement
         layout.addWidget(label("UYGULAMA", "sectionLabel"))
         self.utility_navigation = QVBoxLayout()
         self.utility_navigation.setSpacing(2)
-        self.sidebar_updates = button("↑    Güncellemeler", lambda: self.open_tools(6), "nav")
+        self.sidebar_updates = button("↑    Güncellemeler", self.open_launcher_updates, "nav")
         self.sidebar_updates.setCheckable(True)
         self.utility_navigation.addWidget(self.sidebar_updates)
         for index in (3, 2):
@@ -589,7 +589,14 @@ class Window(Journeys, Management, ContentWorkshops, ShaderWorkshop, Enhancement
     def build_settings(self):
         layout = self.page()
         layout.addWidget(label("Her şey senin ayarında", "title"))
-        layout.addWidget(label("Bellek, Java ve isteğe bağlı Microsoft hesabı ayarları.","muted"))
+        layout.addWidget(label("Oyun, hesap ve görünüm ayarlarını buradan yönet.","muted"))
+        self.settings_tabs=QTabWidget()
+        self.settings_tabs.setMinimumHeight(520)
+        layout.addWidget(self.settings_tabs,1)
+        general=QScrollArea();general.setWidgetResizable(True)
+        body=QWidget();layout=QVBoxLayout(body)
+        layout.setContentsMargins(18,18,18,18);layout.setSpacing(18)
+        general.setWidget(body);self.settings_tabs.addTab(general,'Genel')
         frame, box = panel()
         box.addWidget(label("Oyun ayarları", "cardTitle"))
         form = QFormLayout()

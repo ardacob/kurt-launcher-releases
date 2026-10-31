@@ -446,7 +446,10 @@ class Enhancements:
         except LauncherError as exc: self.report(str(exc))
 
     def build_appearance_tools(self):
-        box = self.tools_tab("Görünüm")
+        self.appearance_page=QScrollArea();self.appearance_page.setWidgetResizable(True)
+        body=QWidget();box=QVBoxLayout(body)
+        box.setContentsMargins(18,18,18,18);box.setSpacing(14)
+        self.appearance_page.setWidget(body);self.settings_tabs.addTab(self.appearance_page,'Görünüm')
         box.addWidget(text("Açık, sunset, sistem veya yüksek kontrast görünümünü seç. Yazı ve kontrolleri birlikte ölçekle."))
         self.theme_choice=QComboBox()
         for title,value in (('Açık · Gün doğumu','light'),('Koyu · Sunset','sunset'),('Sistem teması','system'),('Yüksek kontrast','contrast')):
@@ -529,6 +532,7 @@ class Enhancements:
 
     def build_launcher_update_tools(self):
         box = self.tools_tab("Launcher güncellemesi")
+        self.launcher_updates_page=self.tools_tabs.widget(self.tools_tabs.count()-1)
         box.addWidget(text(f"Kurulu sürüm: {APP_VERSION}\nYalnızca bu yayıncının anahtarıyla imzalanmış paketler kabul edilir. Oyunlar, modlar, dünyalar ve hesap verileri güncelleme paketine dahil edilmez."))
         self.launcher_update_status = text("Ücretsiz GitHub Releases kanalı. İlk çevrimiçi yayın bekleniyor; yerel imzalı paket de seçebilirsin.")
         box.addWidget(self.launcher_update_status)
@@ -601,7 +605,7 @@ class Enhancements:
         if self.store.settings.get("auto_install_updates", True):
             self.maybe_auto_update(force=True)
             return
-        self.open_tools(6)
+        self.open_launcher_updates()
         info = dict(self.online_release)
         notes = info.get("notes", "")[:1500]
         question = f"Kurt Launcher {info['version']} indirilsin mi?\n\n" + notes
@@ -714,7 +718,7 @@ class Enhancements:
         row = QHBoxLayout()
         self.tools_button("Yedekler ve paket paylaşımı", lambda: self.open_tools(0), row)
         self.tools_button("Profil sürümünü değiştir", self.change_profile_version, row)
-        self.tools_button("Görünüm / kapak", lambda: self.open_tools(5), row)
+        self.appearance_shortcut=self.tools_button("Ayarlar · Görünüm", self.open_appearance_settings, row)
         home.insertLayout(3, row)
         self.recent_table = table(["Son kullanılan profiller", "Oyun / yükleyici"])
         self.recent_table.setMaximumHeight(190)
@@ -749,9 +753,16 @@ class Enhancements:
         self.tools_tabs.setCurrentIndex(tab)
         self.sync_sidebar_selection()
 
+    def open_appearance_settings(self):
+        self.navigate(2)
+        self.settings_tabs.setCurrentWidget(self.appearance_page)
+
+    def open_launcher_updates(self):
+        self.open_tools(self.tools_tabs.indexOf(self.launcher_updates_page))
+
     def sync_sidebar_selection(self):
         index = self.pages.currentIndex()
-        updates = index == 5 and hasattr(self, "tools_tabs") and self.tools_tabs.currentIndex() == 6
+        updates = index == 5 and hasattr(self, "launcher_updates_page") and self.tools_tabs.currentWidget() is self.launcher_updates_page
         for i, item in enumerate(self.nav):
             item.setChecked(i == index and not updates)
         self.sidebar_updates.setChecked(updates)

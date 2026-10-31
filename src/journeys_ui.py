@@ -84,7 +84,7 @@ class Journeys:
         self.refresh_journeys()
 
     def open_journey(self,index):
-        self.open_tools(7);self.management_tabs.setCurrentIndex(index);self.refresh_journeys()
+        self.open_tools(self.tools_tabs.indexOf(self.management_page));self.management_tabs.setCurrentIndex(index);self.refresh_journeys()
 
     def refresh_journeys(self):
         if not hasattr(self,'favorites_table'):return

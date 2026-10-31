@@ -401,6 +401,9 @@ Toplam|Total
 Kuyruk|Queue
 '''.strip().splitlines())
 CATALOG.update(dict(line.split('|',1) for line in '''
+Genel|General
+Ayarlar · Görünüm|Settings · Appearance
+Oyun, hesap ve görünüm ayarlarını buradan yönet.|Manage game, account and appearance settings here.
 Aktif profil: Seçilmedi|Active profile: None
 +  Mod .jar|+  Mod .jar
 + .zip ekle|+ Add .zip

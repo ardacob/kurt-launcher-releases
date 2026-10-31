@@ -31,11 +31,16 @@ class JourneyUiTests(unittest.TestCase):
     def test_all_new_tools_reachable_without_changing_sidebar_routes(self):
         self.assertEqual(self.window.management_tabs.count(),6)
         for i in (3,4,5):
-            self.window.open_journey(i);self.assertEqual(self.window.tools_tabs.currentIndex(),7);self.assertEqual(self.window.management_tabs.currentIndex(),i)
+            self.window.open_journey(i);self.assertIs(self.window.tools_tabs.currentWidget(),self.window.management_page);self.assertEqual(self.window.management_tabs.currentIndex(),i)
         self.assertTrue(self.window.continue_button.isEnabled())
 
     def test_live_theme_scale_and_language_round_trip_preserves_profile_names(self):
         w=self.window
+        w.appearance_shortcut.click()
+        self.assertEqual(w.pages.currentIndex(),2)
+        self.assertIs(w.settings_tabs.currentWidget(),w.appearance_page)
+        self.assertTrue(w.appearance_page.isAncestorOf(w.theme_choice))
+        self.assertNotIn(w.appearance_page,[w.tools_tabs.widget(i) for i in range(w.tools_tabs.count())])
         w.theme_choice.setCurrentIndex(w.theme_choice.findData('sunset'));w.interface_scale.setValue(120)
         w.language_choice.setCurrentIndex(w.language_choice.findData('en'));w.save_interface()
         self.assertEqual(w.property('visual_theme'),'sunset');self.assertIn('font-size: 16px',w.styleSheet())

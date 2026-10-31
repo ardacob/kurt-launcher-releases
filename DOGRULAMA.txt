@@ -1,3 +1,11 @@
+Kurt Launcher 0.6.2 — Görünüm Ayarlar altında
+
+Mevcut arayüz kontrolleri tema seçeneklerinin Ayarlar sayfasında bulunduğunu,
+ana ekran kısayolunun Ayarlar → Görünüm açtığını, Güncellemeler ve Yönetim
+bağlantılarının yeni sekme sırasıyla doğru kaldığını doğrular. Tema/dil/ölçek
+kaydetme davranışı aynı kalır. CI tüm 250 uygulama ve 9 yayın testini çalıştırır.
+
+Önceki sürüm doğrulamaları:
 Kurt Launcher 0.6.1 — modern tema ve sekiz yeni oyun aracı, 31 Ekim 2026
 
 250 uygulama + 9 yayın testi. Yerelde yalnız symlink oluşturma yetkisi
@@ -236,5 +244,6 @@ TAMAMLANMASI DIŞ HESAP/ORTAM GEREKTİREN DOĞRULAMALAR
 Önceki 0.3.x gerçek Minecraft 1.20.1 / Fabric / Java 17 kurulumları ve
 Playit yerel IPC denemeleri geçmiş doğrulamalardır; 0.4.0'da gerçek oyun
 başlatma veya gerçek internet tüneli denenmiş gibi değerlendirilmemelidir.
+
 
 

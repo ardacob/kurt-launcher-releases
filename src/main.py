@@ -115,7 +115,9 @@ def main():
             import hashlib
             import subprocess
             assert WinVaultKeyring
-            assert window.tools_tabs.count() == 8
+            assert window.tools_tabs.count() == 7
+            assert window.settings_tabs.count() == 2
+            assert window.settings_tabs.widget(1) is window.appearance_page
             assert window.management_tabs.count() == 6
             assert window.property('visual_theme') in ('light','sunset','contrast')
             from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
@@ -128,7 +130,7 @@ def main():
             window.show()
             app.processEvents()
             window.grab().save(str(store.root / "smoke-test.png"))
-            (store.root / "smoke-test.ok").write_text("Qt + 8 tool tabs + 6 management tabs + modern theme/localization + journeys/world-history + Ed25519 + Minecraft + Windows vault + signed Playit helper SHA256/--help OK",encoding="utf-8")
+            (store.root / "smoke-test.ok").write_text("Qt + 7 tool tabs + 2 settings tabs + 6 management tabs + modern theme/localization + journeys/world-history + Ed25519 + Minecraft + Windows vault + signed Playit helper SHA256/--help OK",encoding="utf-8")
             window.close()
             QThreadPool.globalInstance().waitForDone()
             return 0

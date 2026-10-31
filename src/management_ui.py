@@ -36,6 +36,7 @@ class Management:
         row.addWidget(self.action(button('Seçili yedeği geri yükle',self.restore_world)));layout.addLayout(row);layout.addStretch()
         self.world_rows=[]
         box=self.tools_tab('Yönetim')
+        self.management_page=self.tools_tabs.widget(self.tools_tabs.count()-1)
         tabs=QTabWidget();self.management_tabs=tabs;box.addWidget(tabs)
         tabs.setUsesScrollButtons(True)
         body=QWidget();profile_box=QVBoxLayout(body);tabs.addTab(body,'Profil kopyala')

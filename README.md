@@ -1,12 +1,16 @@
-# Kurt Launcher 0.6.1
+# Kurt Launcher 0.6.2
 
 [En yeni Windows sürümünü indir](https://github.com/ardacob/kurt-launcher-releases/releases/latest) · [Tüm sürümler](https://github.com/ardacob/kurt-launcher-releases/releases) · [Otomatik derleme](https://github.com/ardacob/kurt-launcher-releases/actions/workflows/release.yml)
+
+## 0.6.2: görünüm Ayarlar altında
+
+Tema, vurgu rengi, dil, arayüz ölçeği, kompakt mod listesi ve profil kapağı artık **Ayarlar → Görünüm** bölümünde. Oyun/hesap seçenekleri **Ayarlar → Genel** içinde. Kütüphane’deki Görünüm sekmesi kaldırıldı; ana ekran kısayolu yeni konumu açar. Tercihler ve oyun arşivi korunur.
 
 ## 0.6.1: modern görünüm ve hızlı oyun
 
 0.6.1 dil değişiminde kullanıcı adlarını, profil adlarını, seçim değerlerini ve yapımcı metinlerini olduğu gibi korur.
 
-- **Gün doğumu / Sunset / Sistem / Yüksek kontrast:** Açık modern arayüz varsayılandır. Kütüphane → Görünüm bölümünden tema, Türkçe/İngilizce ve %90–140 ölçek anında uygulanır. Profil adları, yollar ve yapımcı açıklamaları korunur.
+- **Gün doğumu / Sunset / Sistem / Yüksek kontrast:** Açık modern arayüz varsayılandır. Ayarlar → Görünüm bölümünden tema, Türkçe/İngilizce ve %90–140 ölçek anında uygulanır. Profil adları, yollar ve yapımcı açıklamaları korunur.
 - **Son dünyama devam et:** Aktif profilin son dünyası veya Dünyalarım'da seçili dünya Quick Play ile açılır. Minecraft Java 1.20+ desteği ve dünya/profil sürümü eşleşmesi gerekir. Dünya verisi dönüştürülmez.
 - **Favori sunucular:** Adres, özel port ve profili kaydet; gerçek ping, sürüm ve oyuncu bilgisi sorgula, tek tıkla katıl. DNS SRV port keşfi yapılmaz.
 - **Dışarıdan aktar:** Resmî `.minecraft` veya Prism/MultiMC klasörünü tara; oyun/yükleyiciyi incele veya düzelt. Modları, ayarları, paketleri ve isteğe bağlı dünyaları ayrı profile doğrulanmış kopyayla al. Kaynak korunur; hesaplar ve özel başlatma komutları aktarılmaz. İlk Oyna oyun/Java dosyalarını ortak arşive hazırlar.
@@ -221,5 +225,6 @@ Testler:
 Microsoft uygulama kaydı/API izni sağlanmadığından gerçek Microsoft oturumu; kullanıcı adına Playit hesabı bağlanmadığından gerçek herkese açık tünel ve iki farklı ağdan oyun bağlantısı bu sürümde doğrulanmadı. Minecraft EULA onayı kullanıcıya bırakıldı. Tünel/kota API senaryoları taklit servisle test edildi. Bütün eski Minecraft sürümleri veya tüm mod kombinasyonları tek tek denenmedi.
 
 Bağımsız projedir; Mojang/Microsoft ile bağlantısı veya resmî onayı yoktur. Minecraft varlıkları ve modlar dağıtım paketine dahil edilmez; ilgili kaynaklardan indirilir. Kullanılan açık kaynak bileşenlerinin lisansları `third-party` klasöründedir. Qt/PySide DLL'leri dinamik olarak yüklenir; kaynak kodu ve yeniden derleme betiği pakete dahildir.
+
 
 
